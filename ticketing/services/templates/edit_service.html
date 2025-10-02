@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Service</title>
+</head>
+<body>
+    <h1>Edit Service: {{ service.service_name }}</h1>
+    
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save</button>
+    </form>
+
+    <a href="{% url 'manage_services' %}">Back to Manage Services</a>
+</body>
+</html>

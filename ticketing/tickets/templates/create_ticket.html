@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+<head><title>Create Ticket</title></head>
+<body>
+    <h2>Create Ticket</h2>
+    <form method="post">
+        {% csrf_token %}
+        <input type="text" name="ticket_number" placeholder="Ticket Number" required>
+        <button type="submit">Generate</button>
+    </form>
+</body>
+</html>

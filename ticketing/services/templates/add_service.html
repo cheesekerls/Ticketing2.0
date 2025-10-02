@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Service</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e0e0e0;
+            color: #222;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        form {
+            background-color: #fff;
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        h2 {
+            margin-bottom: 25px;
+            color: #000;
+            font-weight: 600;
+        }
+
+        input.form-input, select.form-input {
+            width: 100%;
+            padding: 12px 14px;
+            margin-bottom: 18px;
+            border: 1px solid #aaa;
+            border-radius: 8px;
+            font-size: 15px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #ccc;
+            color: black;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #999;
+        }
+
+        a {
+            display: inline-block;
+            margin-top: 20px;
+            color: #444;
+            text-decoration: none;
+            font-size: 16px;
+            transition: color 0.3s ease;
+        }
+
+        a:hover {
+            color: #666;
+            text-decoration: underline;
+        }
+
+        .form-field {
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+   <form method="post">
+    <h2>Add Service</h2>
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+        <div style="color:red; margin-bottom: 15px;">
+            {{ form.non_field_errors }}
+        </div>
+    {% endif %}
+
+    <div class="form-field">
+        {{ form.department.label_tag }}<br>
+        {{ form.department }}
+    </div>
+
+    <div class="form-field">
+        {{ form.service_name.label_tag }}<br>
+        {{ form.service_name }}
+    </div>
+
+    
+
+    {% comment %} <div class="form-field">
+        {{ form.comp_id.label_tag }}<br>
+        {{ form.comp_id }}
+    </div> {% endcomment %}
+
+    <button type="submit">Save</button>
+    <br>
+    <a href="{% url 'manage_services' %}">Back</a>
+</form>
+</body>
+</html>

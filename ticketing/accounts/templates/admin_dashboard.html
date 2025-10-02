@@ -1,0 +1,123 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background: #0a3d62;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            padding-top: 20px;
+            color: white;
+        }
+
+        .sidebar h2 {
+            text-align: center;
+            margin: 0;
+            padding: 10px;
+            font-size: 18px;
+        }
+
+        .sidebar img {
+            display: block;
+            margin: 15px auto;
+            width: 80px;
+            border-radius: 50%;
+        }
+
+        .sidebar a {
+            display: block;
+            padding: 10px 20px;
+            text-decoration: none;
+            color: white;
+        }
+
+        .sidebar a:hover {
+            background: #3c6382;
+        }
+
+        /* Top Navbar */
+        .topbar {
+            margin-left: 200px;
+            background: #0a3d62;
+            color: white;
+            padding: 25px;
+            display: flex;
+            
+        }
+
+        /* Main Content */
+        .main {
+            margin-left: 200px;
+            padding: 30px;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(3, 300px);
+            gap: 40px;
+            justify-content: center;
+            margin-top: 350px;
+        }
+
+        .card {
+            background: #145a8d;
+            color: white;
+            padding: 50px;
+            text-align: center;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.5s;
+        }
+
+        .card:hover {
+            background: #1e6fa8;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h2>Admin Dashboard</h2>
+        <img src="{% static 'images/logo1.png' %}" alt="Logo">
+        <a href="#">Dashboard</a>
+        <a href="#">Staff</a>
+    <a href="{% url 'department_list' %}">Department</a>
+    <a href="{% url 'manage_services' %}">Services</a>
+    <a href="#">Reports</a>
+    </div>
+
+    <!-- Topbar -->
+    <div class="topbar">
+        
+        <span>☰</span>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main">
+        <div class="cards">
+            <div class="card">Staff</div>
+            <div class="card">Services</div>
+            <div class="card">Department</div>
+            <div class="card">Others</div>
+            <div class="card">Others</div>
+            <div class="card">Others</div>
+        </div>
+    </div>
+
+</body>
+</html>

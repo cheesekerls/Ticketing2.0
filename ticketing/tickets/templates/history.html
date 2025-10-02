@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head><title>Ticket History</title></head>
+<body>
+    <h2>Ticket History</h2>
+    <ul>
+        {% for ticket in tickets %}
+            <li>{{ ticket.ticket_number }} - {{ ticket.status }}</li>
+        {% empty %}
+            <li>No history found.</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Departments</title>
+</head>
+<body>
+    <h2>Departments</h2>
+    <ul>
+        {% for dept in departments %}
+            <li>{{ dept.department_id }} - {{ dept.department_name }} ({{ dept.prefix }})</li>
+        {% empty %}
+            <li>No departments found.</li>
+        {% endfor %}
+    </ul>
+    <a href="{% url 'add_department' %}">Add New Department</a>
+</body>
+</html>

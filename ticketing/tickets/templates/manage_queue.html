@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head><title>Manage Queue</title></head>
+<body>
+    <h2>Queue Management</h2>
+    <ul>
+        {% for ticket in tickets %}
+            <li>
+                {{ ticket.ticket_number }} - {{ ticket.status }}
+                <a href="{% url 'mark_served' ticket.pk %}">Serve</a> |
+                <a href ="{% url 'skip_ticket' ticket.pk %}">Skip</a> |
+                <a href="{% url 'mark_missed' ticket.pk %}">Missed</a>
+            </li>
+        {% empty %}
+            <li>No tickets in queue.</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
