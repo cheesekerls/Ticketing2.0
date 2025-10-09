@@ -1,24 +1,30 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Add Department</title>
-    <style>
-        body { font-family: Arial; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f0f0; }
-        form { background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 6px 15px rgba(0,0,0,0.1); width: 350px; }
-        h2 { text-align: center; margin-bottom: 20px; }
-        input { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #aaa; }
-        button { width: 100%; padding: 10px; background: #ccc; border: none; border-radius: 6px; cursor: pointer; }
-        button:hover { background: #999; }
-        a { display: block; text-align: center; margin-top: 15px; text-decoration: none; color: #333; }
-    </style>
-</head>
-<body>
-    <form method="post">
-        <h2>Add Department</h2>
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Save</button>
-        <a href="{% url 'department_list' %}">Back to List</a>
-    </form>
-</body>
-</html>
+{% extends "base_superadmin.html" %}
+
+{% block title %}Add Department{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: center; margin-top: 50px;">
+    <div style="background: #f0f0f0; padding: 30px; border-radius: 10px; width: 400px;">
+
+        <form method="post" id="deptForm">
+            {% csrf_token %}
+
+            <label for="id_department_name">Department name :</label>
+            <input type="text" name="department_name" id="id_department_name" 
+                   class="form-control" style="width: 100%; margin-bottom: 15px; padding: 8px;" required>
+
+            <label for="id_prefix">Prefix</label>
+            <input type="text" name="prefix" id="id_prefix" 
+                   class="form-control" style="width: 100%; margin-bottom: 15px; padding: 8px;" required>
+
+            <div style="text-align: center;">
+                <button type="submit" 
+                        style="background: #0d5c7d; color: white; border: none; padding: 10px 30px; border-radius: 5px; cursor: pointer;">
+                    ADD
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+{% endblock %}

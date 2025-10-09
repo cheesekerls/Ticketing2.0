@@ -24,6 +24,8 @@ urlpatterns = [
     path('departments/', include('departments.urls')),
     path('services/', include('services.urls')),
     path('tickets/', include('tickets.urls')),
+    path('accounts/', include('django.contrib.auth.urls')),  # <-- put it here
+
 
     # Optional: redirect root to accounts page
     path('', include('accounts.urls')),

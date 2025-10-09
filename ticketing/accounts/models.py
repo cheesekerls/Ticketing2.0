@@ -9,6 +9,7 @@ from tickets.models import Ticket
 class Employee(models.Model):
     employee_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100)
+    department = models.ForeignKey(Department, on_delete=models.CASCADE, null=True)
     position = models.CharField(max_length=50)
 
     def __str__(self):

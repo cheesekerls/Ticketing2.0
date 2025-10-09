@@ -5,7 +5,7 @@ from services.models import Service
 class DepartmentForm(forms.ModelForm):
     class Meta:
         model = Department
-        fields = [ 'department_name']
+        fields = [ 'department_name', 'prefix', 'department_id']  # match model fields
 
     def clean_department_id(self):
         department_id = self.cleaned_data['department_id']
