@@ -1,47 +1,51 @@
-{% extends "base_superadmin.html" %}
+{% extends "main.html" %}
 
 {% block title %}Departments{% endblock %}
 
 {% block content %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body>
+<div class="content-area">
+    <h2 style="margin-bottom: 15px;">Departments</h2>
 
-<h2>Departments</h2>
+    <table border="1" width="100%" style="border-collapse: collapse;">
+        <tr style="background: #0a3d62; color: white;">
+            <th>ID</th>
+            <th>Name</th>
+            <th>Prefix</th>
+            <th>Action</th>
+        </tr>
+        {% for dept in departments %}
+        <tr>
+            <td>{{ dept.department_id }}</td>
+            <td>{{ dept.department_name }}</td>
+            <td>{{ dept.prefix }}</td>
+            <td>
+                <button style="background:#1e90ff; color:white; border:none; padding:5px 10px; border-radius:3px;"
+                        onclick="openEditModal('{{ dept.department_id }}', '{{ dept.department_name }}', '{{ dept.prefix }}')">
+                    Edit
+                </button>
+                <button style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:3px;"
+                        onclick="confirmDelete('{{ dept.department_id }}')">
+                    Delete
+                </button>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" style="text-align:center;">No departments found.</td></tr>
+        {% endfor %}
+    </table>
 
-<table border="1" width="100%" style="border-collapse: collapse;">
-    <tr>
-        <th>ID</th>
-        <th>Name</th>
-        <th>Prefix</th>
-        <th>Action</th>
-    </tr>
-    {% for dept in departments %}
-    <tr>
-        <td>{{ dept.department_id }}</td>
-        <td>{{ dept.department_name }}</td>
-        <td>{{ dept.prefix }}</td>
-        <td>
-            <button onclick="openEditModal('{{ dept.department_id }}', '{{ dept.department_name }}', '{{ dept.prefix }}')">Edit</button>
-            <button onclick="confirmDelete('{{ dept.department_id }}')">Delete</button>
-        </td>
-    </tr>
-    {% empty %}
-    <tr><td colspan="4">No departments found.</td></tr>
-    {% endfor %}
-</table>
+    <div style="margin-top: 20px;">
+        <a href="{% url 'add_department' %}" 
+           style="background: #0d5c7d; color: white; padding: 8px 16px; border-radius: 5px; text-decoration: none;">
+           + Add Department
+        </a>
+    </div>
+</div>
 
-<br>
-<a href="{% url 'add_department' %}">+ Add Department</a>
-
-<!-- 🧠 Edit Modal -->
-<div id="editModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-    background:rgba(0,0,0,0.6); justify-content:center; align-items:center;">
+<!-- ✅ Hidden Edit Modal -->
+<div id="editModal" 
+     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+     background:rgba(0,0,0,0.6); justify-content:center; align-items:center; z-index:999;">
     <div style="background:white; padding:20px; border-radius:10px; width:400px;">
         <h3>Edit Department</h3>
         <form id="editForm" method="post" action="{% url 'update_department' %}">
@@ -51,16 +55,21 @@
             <input type="text" id="edit_name" name="department_name" required><br><br>
             <label>Prefix:</label><br>
             <input type="text" id="edit_prefix" name="prefix" required><br><br>
-            <button type="submit">Save</button>
-            <button type="button" onclick="closeEditModal()">Cancel</button>
+
+            <button type="submit" 
+                    style="background:#1e90ff; color:white; border:none; padding:8px 15px; border-radius:5px;">Save</button>
+            <button type="button" onclick="closeEditModal()" 
+                    style="background:#ccc; color:black; border:none; padding:8px 15px; border-radius:5px;">Cancel</button>
         </form>
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 // 🧠 Show edit modal
 function openEditModal(id, name, prefix) {
-    document.getElementById('editModal').style.display = 'flex';
+    const modal = document.getElementById('editModal');
+    modal.style.display = 'flex';
     document.getElementById('edit_id').value = id;
     document.getElementById('edit_name').value = name;
     document.getElementById('edit_prefix').value = prefix;
@@ -88,7 +97,4 @@ function confirmDelete(id) {
     });
 }
 </script>
-
-</body>
-</html>
 {% endblock %}

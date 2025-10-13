@@ -21,7 +21,7 @@ def add_department(request):
             messages.success(request, "✅ Department Added")
 
             # return list after save
-            return render(request, "admin_dashboard.html", {"departments": departments})
+        return redirect("department_list")
 
     else:
         form = DepartmentForm()

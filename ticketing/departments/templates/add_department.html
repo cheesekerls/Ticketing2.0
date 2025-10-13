@@ -1,30 +1,28 @@
-{% extends "base_superadmin.html" %}
+{% extends "main.html" %}
 
 {% block title %}Add Department{% endblock %}
 
 {% block content %}
-<div style="display: flex; justify-content: center; margin-top: 50px;">
-    <div style="background: #f0f0f0; padding: 30px; border-radius: 10px; width: 400px;">
+<div class="container mt-4">
+  <div class="card shadow-sm p-4" style="max-width: 500px; margin: auto;">
+      <h4 class="mb-4 text-center text-primary">Add Department</h4>
 
-        <form method="post" id="deptForm">
-            {% csrf_token %}
+      <form method="post" id="deptForm">
+          {% csrf_token %}
+          <div class="mb-3">
+              <label for="id_department_name" class="form-label">Department Name</label>
+              <input type="text" name="department_name" id="id_department_name" class="form-control" required>
+          </div>
 
-            <label for="id_department_name">Department name :</label>
-            <input type="text" name="department_name" id="id_department_name" 
-                   class="form-control" style="width: 100%; margin-bottom: 15px; padding: 8px;" required>
+          <div class="mb-3">
+              <label for="id_prefix" class="form-label">Prefix</label>
+              <input type="text" name="prefix" id="id_prefix" class="form-control" required>
+          </div>
 
-            <label for="id_prefix">Prefix</label>
-            <input type="text" name="prefix" id="id_prefix" 
-                   class="form-control" style="width: 100%; margin-bottom: 15px; padding: 8px;" required>
-
-            <div style="text-align: center;">
-                <button type="submit" 
-                        style="background: #0d5c7d; color: white; border: none; padding: 10px 30px; border-radius: 5px; cursor: pointer;">
-                    ADD
-                </button>
-            </div>
-        </form>
-
-    </div>
+          <div class="text-center">
+              <button type="submit" class="btn btn-primary px-4">Add</button>
+          </div>
+      </form>
+  </div>
 </div>
 {% endblock %}

@@ -29,7 +29,7 @@ class CustomLoginView(LoginView):
 
         # Redirect admins
         if username.endswith(".admin") and user.is_superuser:
-            return "/accounts/admin/dashboard/"
+            return "/accounts/superadmin/dashboard/"
 
         # Redirect staff
         elif username.endswith(".staff") and user.is_staff and not user.is_superuser:
@@ -41,7 +41,7 @@ class CustomLoginView(LoginView):
 @login_required
 @user_passes_test(lambda u: u.is_superuser and u.username.endswith(".admin"))
 def admin_dashboard(request):
-    return render(request, "admin_dashboard.html")
+    return render(request, "superadmin_dashboard.html")
 
 # Staff dashboard (only staff with .staff username)
 @login_required
@@ -62,10 +62,42 @@ def employee_list(request):
     employees = Employee.objects.all()
     return render(request, "staff_dashboard.html", {"employees": employees})
 
+# 🧠 Update employee (Edit Modal Form)
+def update_employee(request):
+    if request.method == 'POST':
+        emp_id = request.POST.get('id')
+        name = request.POST.get('name')
+        department_name = request.POST.get('department')
+
+        employee = get_object_or_404(Employee, pk=emp_id)
+        
+        # Update employee fields
+        employee.name = name
+        
+        # Find or ignore department update
+        try:
+            department = Department.objects.get(department_name=department_name)
+            employee.department = department
+        except Department.DoesNotExist:
+            messages.error(request, "Department not found.")
+            return redirect('employee_list')
+
+        employee.save()
+        messages.success(request, "Employee updated successfully!")
+        return redirect('employee_list')
+
+    return redirect('employee_list')
+
+# 🧠 Delete employee
+def delete_employee(request, emp_id):
+    employee = get_object_or_404(Employee, pk=emp_id)
+    employee.delete()
+    messages.success(request, "Employee deleted successfully!")
+    return redirect('employee_list')
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser and u.username.endswith(".admin"))
-def add_staff(request):
+def add_admin(request):
     departments = Department.objects.all()
 
     # Debug: show request method
@@ -77,13 +109,13 @@ def add_staff(request):
 
         if not email or not department_id:
             messages.error(request, "Please fill all fields.")
-            return redirect('add_staff')
+            return redirect('add_admin')
 
         # Create user
         user, created = User.objects.get_or_create(username=email, email=email)
         if not created:
             messages.warning(request, "This email is already registered.")
-            return redirect('add_staff')
+            return redirect('add_admin')
 
         user.set_unusable_password()
         user.save()
@@ -122,7 +154,7 @@ def add_staff(request):
             messages.success(request, f"User created and email sent to {email}.")
 
         # Always redirect after POST
-        return redirect('add_staff')
+        return redirect('add_admin')
 
     # GET request → show form
     return render(request, 'add_staff_department.html', {'departments': departments})

@@ -1,5 +1,22 @@
 <form method="post">
   {% csrf_token %}
-  {{ form.as_p }}
+  <p>
+    <label for="id_username">Username:</label>
+    <input type="text" name="username" id="id_username" required>
+  </p>
+
+  <p>
+    <label for="id_password">Password:</label>
+    <input type="password" name="password" id="id_password" required>
+    <input type="checkbox" id="showPassword" onclick="togglePassword()"> Show Password
+  </p>
+
   <button type="submit">Login</button>
 </form>
+
+<script>
+function togglePassword() {
+  const passwordField = document.getElementById("id_password");
+  passwordField.type = passwordField.type === "password" ? "text" : "password";
+}
+</script>

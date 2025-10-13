@@ -1,0 +1,58 @@
+{% extends "main.html" %}
+{% load static %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block sidebar %}
+    {% include "sidebar.html" %}
+{% endblock %}
+
+{% block navbar %}
+<div class="navbar">
+    <div class="title">Dashboard</div>
+    <div class="user-info">
+        <span>{{ request.user.username }}</span>
+        <button id="logoutBtn">Logout</button>
+    </div>
+</div>
+
+<form id="logoutForm" action="{% url 'logout' %}" method="post" style="display: none;">
+    {% csrf_token %}
+</form>
+
+<script>
+document.getElementById("logoutBtn").addEventListener("click", function() {
+    Swal.fire({
+        title: "Are you sure?",
+        text: "You will be logged out from your session.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Yes, logout",
+        cancelButtonText: "Cancel"
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire({
+                title: "Logging out...",
+                text: "Please wait a moment.",
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            setTimeout(() => {
+                document.getElementById("logoutForm").submit();
+            }, 2000);
+        }
+    });
+});
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <h2>Welcome, {{ request.user.username }} 👋</h2>
+    <p>Select an option from the sidebar to get started.</p>
+</div>
+{% endblock %}

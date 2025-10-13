@@ -1,4 +1,4 @@
-{% extends "base_superadmin.html" %}
+{% extends "main.html" %}
 
 {% block title %}Add Staff{% endblock %}
 
@@ -7,23 +7,20 @@
     <div style="background: #f0f0f0; padding: 30px; border-radius: 10px; width: 400px;">
 
         <!-- ✅ Show success/error/warning messages here -->
-   {% if messages %}
-<div style="margin-bottom: 20px;">
-    {% for message in messages %}
-        <div style="padding: 10px; border-radius: 5px; margin-bottom: 10px;
-                    {% if message.tags == 'success' %}background-color: #d4edda; color: #155724;
-                    {% elif message.tags == 'error' %}background-color: #f8d7da; color: #721c24;
-                    {% elif message.tags == 'warning' %}background-color: #fff3cd; color: #856404;
-                    {% endif %}">
-            {{ message }}
+        <div style="margin-bottom: 20px;">
+            {% for message in messages %}
+                <div style="padding: 10px; border-radius: 5px; margin-bottom: 10px;
+                            {% if message.tags == 'success' %}background-color: #d4edda; color: #155724;
+                            {% elif message.tags == 'error' %}background-color: #f8d7da; color: #721c24;
+                            {% elif message.tags == 'warning' %}background-color: #fff3cd; color: #856404;
+                            {% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
         </div>
-    {% endfor %}
-</div>
-{% endif %}
-
         <!-- ✅ End of messages section -->
 
-        <form method="post" action="{% url 'add_staff' %}" id="deptForm">
+        <form method="post" action="{% url 'add_admin' %}" id="deptForm">
             {% csrf_token %}
 
             <label for="id_department">Department :</label>
@@ -34,6 +31,11 @@
                     <option value="{{ dept.id }}">{{ dept.department_name }}</option>
                 {% endfor %} 
             </select>
+
+            <!-- ✅ New "Enter Name" field -->
+            <label for="id_name">Name :</label>
+            <input type="text" name="name" id="id_name"
+                   class="form-control" style="width: 100%; margin-bottom: 15px; padding: 8px;" required>
 
             <label for="id_email">Email :</label>
             <input type="email" name="email" id="id_email"
