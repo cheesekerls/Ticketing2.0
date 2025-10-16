@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Queue Manager</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    h1 { color: #123B5A; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
+    button { padding: 8px 12px; border: none; background: #123B5A; color: white; border-radius: 5px; cursor: pointer; }
+    button:hover { background: #0e2f47; }
+  </style>
+</head>
+<body>
+  <h1>Counter 1</h1>
+
+  {% if current_ticket %}
+    <h2>Now Serving: <strong>{{ current_ticket.ticket_number }}, {{current_ticket.lane}}</strong></h2>
+  {% else %}
+    <h2>No ticket is currently being served.</h2>
+  {% endif %}
+
+  <form action="{% url 'call_next_ticket' %}" method="post">
+    {% csrf_token %}
+    <button type="submit"> Call Next Ticket</button>
+  </form>
+
+  <h3>Waiting Tickets</h3>
+  <table>
+    <tr>
+      <th>Ticket #</th>
+       <th>Lane</th>
+      <th>Status</th>
+      <th>Actions</th>
+    </tr>
+    {% for t in tickets %}
+      <tr>
+        <td>{{ t.ticket_number }}</td>
+          <td>{{ t.lane }}</td>
+        <td>{{ t.status }}</td>
+        <td>
+          <a href="{% url 'skip_ticket' t.ticket_id %}"><button>⏭ Skip</button></a>
+          <a href="{% url 'cancel_ticket' t.ticket_id %}"><button style="background:#b30000;">❌ Cancel</button></a>
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="3">No waiting tickets</td></tr>
+    {% endfor %}
+  </table>
+</body>
+</html>

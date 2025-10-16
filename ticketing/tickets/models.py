@@ -8,10 +8,12 @@ from django.utils import timezone
 class Ticket(models.Model):
     ticket_id = models.AutoField(primary_key=True)
     ticket_number = models.CharField(max_length=20)
-    priority = models.CharField(max_length=50, blank=True, null=True)
+    lane= models.CharField(max_length=50, blank=True, null=True)
     status = models.CharField(max_length=50, blank=True, null=True)
-    service = models.ForeignKey(Service, on_delete=models.CASCADE)
+    service = models.ForeignKey(Service, on_delete=models.CASCADE, null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now, editable=False)
+    queue_position = models.IntegerField(default=0)
+
 
     def __str__(self):
         return self.ticket_number
