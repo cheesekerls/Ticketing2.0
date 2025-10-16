@@ -1,12 +1,12 @@
 {% extends "main.html" %}
 
-{% block title %}Add Staff{% endblock %}
+{% block title %}Add Admin{% endblock %}
 
 {% block content %}
 <div style="display: flex; justify-content: center; margin-top: 50px;">
     <div style="background: #f0f0f0; padding: 30px; border-radius: 10px; width: 400px;">
 
-        <!-- ✅ Show success/error/warning messages here -->
+        <!-- Show messages -->
         <div style="margin-bottom: 20px;">
             {% for message in messages %}
                 <div style="padding: 10px; border-radius: 5px; margin-bottom: 10px;
@@ -18,33 +18,31 @@
                 </div>
             {% endfor %}
         </div>
-        <!-- ✅ End of messages section -->
 
-        <form method="post" action="{% url 'add_admin' %}" id="deptForm">
+        <form method="post" action="{% url 'add_admin' %}">
             {% csrf_token %}
 
-            <label for="id_department">Department :</label>
+            <label for="id_department">Department:</label>
             <select name="department" id="id_department"
                     class="form-control" style="width: 100%; margin-bottom: 15px; padding: 8px;" required>
                 <option value="">-- Select Department --</option>
                 {% for dept in departments %}
                     <option value="{{ dept.id }}">{{ dept.department_name }}</option>
-                {% endfor %} 
+                {% endfor %}
             </select>
 
-            <!-- ✅ New "Enter Name" field -->
-            <label for="id_name">Name :</label>
+            <label for="id_name">Name:</label>
             <input type="text" name="name" id="id_name"
                    class="form-control" style="width: 100%; margin-bottom: 15px; padding: 8px;" required>
 
-            <label for="id_email">Email :</label>
+            <label for="id_email">Email:</label>
             <input type="email" name="email" id="id_email"
                    class="form-control" style="width: 100%; margin-bottom: 15px; padding: 8px;" required>
 
             <div style="text-align: center;">
-                <button type="submit" 
+                <button type="submit"
                         style="background: #0d5c7d; color: white; border: none; padding: 10px 30px; border-radius: 5px; cursor: pointer;">
-                    ADD
+                    ADD ADMIN
                 </button>
             </div>
         </form>

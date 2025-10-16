@@ -1,0 +1,41 @@
+{% extends "main.html" %}
+
+{% block title %}Add Admin{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: center; margin-top: 50px;">
+    <div style="background: #f0f0f0; padding: 30px; border-radius: 10px; width: 400px;">
+
+        <!-- Messages -->
+        {% for message in messages %}
+            <div style="padding: 10px; margin-bottom: 10px; border-radius: 5px;
+                        {% if message.tags == 'success' %}background-color: #d4edda; color: #155724;
+                        {% elif message.tags == 'error' %}background-color: #f8d7da; color: #721c24;
+                        {% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+
+        <form method="post" action="{% url 'add_admin' %}">
+            {% csrf_token %}
+
+            <label>Department:</label>
+            {{ form.department }}
+
+            <label>Name:</label>
+            {{ form.name }}
+
+            <label>Email:</label>
+            {{ form.email }}
+
+            <div style="text-align: center; margin-top: 15px;">
+                <button type="submit"
+                        style="background: #0d5c7d; color: white; border: none; padding: 10px 30px; border-radius: 5px; cursor: pointer;">
+                    ADD ADMIN
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+{% endblock %}

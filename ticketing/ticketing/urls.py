@@ -16,6 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.contrib.auth import views as auth_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -25,7 +26,10 @@ urlpatterns = [
     path('services/', include('services.urls')),
     path('tickets/', include('tickets.urls')),
     path('accounts/', include('django.contrib.auth.urls')),  # <-- put it here
-
+    path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(
+        template_name='registration/password_reset_confirm.html',
+        success_url='/login/'
+    ), name='password_reset_confirm'),
 
     # Optional: redirect root to accounts page
     path('', include('accounts.urls')),

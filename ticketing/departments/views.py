@@ -4,9 +4,11 @@ from departments.models import Department
 from .forms import DepartmentForm
 from .forms import Department
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required, user_passes_test
+from accounts.views import role_required
 
-
-
+@login_required
+@role_required('moderator')
 def department_list(request):
     departments = Department.objects.all()
     return render(request, "department_list.html", {"departments": departments})
