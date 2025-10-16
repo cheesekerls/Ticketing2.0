@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from tickets.models import Ticket
 from django.db import transaction
+from django.http import JsonResponse
 
 def queue_dashboard(request):
     # Ensure all tickets have a queue_position (fallback if older ones don't)
@@ -94,8 +95,8 @@ def call_next_ticket(request):
 
 
 
-def skip_ticket(request, ticket_id):
-    ticket = get_object_or_404(Ticket, pk=ticket_id)
+def skip_ticket(request, ticket_number):
+    ticket = get_object_or_404(Ticket, ticket_number=ticket_number)
 
     # Find the next ticket immediately after this one
     next_ticket = Ticket.objects.filter(
@@ -122,8 +123,16 @@ def skip_ticket(request, ticket_id):
     return redirect('queue_dashboard')
 
 
-def cancel_ticket(request, ticket_id):
-    ticket = get_object_or_404(Ticket, pk=ticket_id)
-    ticket.status = 'Cancelled'
-    ticket.save()
-    return redirect('queue_dashboard')
+
+
+
+def cancel_ticket(request, ticket_number):
+    if request.method == 'POST':
+        try:
+            ticket = Ticket.objects.get(ticket_number=ticket_number)
+            ticket.status = 'Cancelled'
+            ticket.save()
+            return JsonResponse({'success': True})
+        except Ticket.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Ticket not found'})
+    return JsonResponse({'success': False, 'error': 'Invalid request'})

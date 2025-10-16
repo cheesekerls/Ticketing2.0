@@ -3,19 +3,36 @@
 <head>
   <title>Queue Manager</title>
   <style>
-    body { font-family: Arial; padding: 20px; }
-    h1 { color: #123B5A; }
+    body { font-family: Arial; padding: 15px ;margin: 0px }
+    h2 { color: #123B5A; }
     table { border-collapse: collapse; width: 100%; margin-top: 20px; }
     th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
     button { padding: 8px 12px; border: none; background: #123B5A; color: white; border-radius: 5px; cursor: pointer; }
     button:hover { background: #0e2f47; }
+
+    
+  header {
+  background-color: #123B5A;
+  color: white;
+  padding: 15px;
+  font-size: 22px;
+  height: 30px;
+  font-weight: bold;
+  text-align: center;
+  margin-top: -15px;
+}
+
+
+}
+
   </style>
+
 </head>
 <body>
-  <h1>Counter 1</h1>
 
+  <header>  COUNTER 1 </header>
   {% if current_ticket %}
-    <h2>Now Serving: <strong>{{ current_ticket.ticket_number }}, {{current_ticket.lane}}</strong></h2>
+    <h2>Now Serving: <strong>{{ current_ticket.ticket_number }}</strong></h2>
   {% else %}
     <h2>No ticket is currently being served.</h2>
   {% endif %}
@@ -29,6 +46,7 @@
   <table>
     <tr>
       <th>Ticket #</th>
+       <th>Service</th>
        <th>Lane</th>
       <th>Status</th>
       <th>Actions</th>
@@ -36,16 +54,57 @@
     {% for t in tickets %}
       <tr>
         <td>{{ t.ticket_number }}</td>
+          <td>{{ t.service.service_name }}</td>
           <td>{{ t.lane }}</td>
         <td>{{ t.status }}</td>
-        <td>
-          <a href="{% url 'skip_ticket' t.ticket_id %}"><button>⏭ Skip</button></a>
-          <a href="{% url 'cancel_ticket' t.ticket_id %}"><button style="background:#b30000;">❌ Cancel</button></a>
-        </td>
+
+     <td>
+  <form action="{% url 'skip_ticket' t.ticket_number %}" method="post" style="display:inline;">
+    {% csrf_token %}
+    <button type="submit" style="background:#123B5A;">SKIP</button>
+  </form>
+
+ <form class="cancel-form" data-ticket="{{ t.ticket_number }}" method="post" style="display:inline;">
+  {% csrf_token %}
+  <button type="submit" style="background:#b30000;">CANCEL</button>
+</form>
+</td>
+
       </tr>
     {% empty %}
       <tr><td colspan="3">No waiting tickets</td></tr>
     {% endfor %}
   </table>
+
+  <script>
+document.querySelectorAll('.cancel-form').forEach(form => {
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const ticketNumber = this.dataset.ticket;
+    const csrfToken = this.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    // Use Django's reverse URL
+    const url = "{% url 'cancel_ticket' 'TICKET_NUMBER' %}".replace('TICKET_NUMBER', ticketNumber);
+
+    fetch(url, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': csrfToken, 'Accept': 'application/json' },
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        const row = form.closest('tr');
+        row.querySelector('td:nth-child(3)').textContent = 'Cancelled';
+        row.querySelectorAll('button').forEach(btn => btn.disabled = true);
+      } else {
+        alert(data.error || 'Failed to cancel ticket');
+      }
+    })
+    .catch(err => console.error(err));
+  });
+});
+</script>
+
 </body>
 </html>

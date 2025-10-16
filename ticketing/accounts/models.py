@@ -22,6 +22,7 @@ class AuthUser(models.Model):
 
 class Counter(models.Model):
     counter_id = models.AutoField(primary_key=True)
+    counter_number = models.CharField(max_length=100)
     department = models.ForeignKey(Department, on_delete=models.CASCADE)
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE)
     service = models.ForeignKey(Service, on_delete=models.CASCADE)

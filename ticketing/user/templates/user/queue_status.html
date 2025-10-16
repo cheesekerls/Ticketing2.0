@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Queue Status</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      height: 100vh;
+    }
+
+    .header {
+      background-color: #123B5A;
+      color: #fff;
+      width: 100%;
+      text-align: center;
+      padding: 15px 0;
+      font-size: 1.4rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      height: 30px;
+    }
+
+    
+    .ticket-box {
+      background-color: #fff;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 30px 40px;
+      text-align: center;
+      margin-top: 80px;
+      width: 90%;
+      max-width: 420px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    p {
+      font-size: 1rem;
+      color: #222;
+      margin: 6px 0;
+    }
+
+    .highlight {
+      font-weight: 600;
+    }
+
+    .status {
+      font-weight: 700;
+      color: #123B5A;
+      text-transform: capitalize;
+    }
+
+    .cancelled {
+      font-weight: 700;
+      color: #a30000;
+    }
+
+    .note {
+      margin-top: 20px;
+      color: #444;
+      font-size: 0.95rem;
+    }
+
+    .end-btn {
+      margin-top: 25px;
+      background-color: #123B5A;
+      color: white;
+      border: none;
+      padding: 12px 0;
+      width: 100%;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .end-btn:hover {
+      background-color: #123B5A;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header"></div>
+
+  <div class="ticket-box" id="ticket-box">
+    <h2>Ticket #{{ ticket.ticket_number }}</h2>
+    <p><span class="highlight">{{ ticket.lane}}</span></p>
+    <p>Service: <span class="highlight">{{ ticket.service.service_name }}</span></p>
+    <p>Status: 
+      <span id="ticket-status" 
+            class="{% if ticket.status == 'Cancelled' %}cancelled{% else %}status{% endif %}">
+        {{ ticket.status }}
+      </span>
+    </p>
+
+    <div id="ticket-details">
+
+      <!-- People ahead count -->
+      <p id="people-ahead">
+        {% if people_ahead_count == 0 %}
+          No one ahead of you
+        {% elif people_ahead_count == 1 %}
+          1 person ahead of you
+        {% else %}
+          {{ people_ahead_count }} People ahead of you:
+        {% endif %}
+      </p>
+
+      <div class="note">
+        {% if ticket.status == "Called" %}
+          <p>✅ It's your turn{% if ticket.counter %}, please go to counter {{ ticket.counter }}{% endif %}</p>
+        {% elif ticket.status == "Waiting" %}
+          <p>⏳ Please wait for your turn</p>
+        {% elif ticket.status == "Cancelled" %}
+          <p>You are not in the waiting list anymore.</p>
+        {% elif ticket.status == "Served" %}
+          <p>✅ Your service is completed.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if ticket.status != "Cancelled" and ticket.status != "Served" %}
+    <button class="end-btn" id="end-btn"
+        onclick="cancelTicket('{% url 'cancel_ticket' ticket.ticket_number %}')">
+      END
+    </button>
+    {% endif %}
+  </div>
+
+  <script>
+  // Cancel ticket function
+  function cancelTicket(url) {
+    if (!confirm("Are you sure you want to cancel your ticket?")) return;
+
+    fetch(url, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken') },
+      })
+      .then(response => {
+        if (!response.ok) throw new Error("HTTP error " + response.status);
+        return response.json();
+      })
+      .then(data => {
+        if (data.success) {
+          // Update ticket status to Cancelled and set people ahead to 0
+          updateTicketStatus("Cancelled", null, 0);
+        } else {
+          alert("Failed to cancel ticket: " + (data.error || "Unknown error"));
+        }
+      })
+      .catch(err => alert("Request failed: " + err));
+  }
+
+  // Update ticket status dynamically
+  function updateTicketStatus(status, counterNumber = null, peopleAheadCount = null) {
+    const statusEl = document.getElementById("ticket-status");
+    const noteEl = document.querySelector(".note");
+    const endBtn = document.getElementById("end-btn");
+    const peopleAheadEl = document.getElementById("people-ahead");
+
+    statusEl.textContent = status;
+
+    // Update status classes
+    if (status === "Cancelled") {
+      statusEl.classList.remove("status");
+      statusEl.classList.add("cancelled");
+    } else {
+      statusEl.classList.remove("cancelled");
+      statusEl.classList.add("status");
+    }
+
+    // Update note
+    if (status === "Called" && counterNumber !== null) {
+      noteEl.innerHTML = `<p>✅ It's your turn, please go to counter ${counterNumber}</p>`;
+    } else if (status === "Waiting") {
+      noteEl.innerHTML = `<p>⏳ Please wait for your turn</p>`;
+    } else if (status === "Cancelled") {
+      noteEl.innerHTML = `<p>You are not in the waiting list anymore.</p>`;
+    } else if (status === "Served") {
+      noteEl.innerHTML = `<p>✅ Your service is completed.</p>`;
+    }
+
+    // Remove END button if status is Cancelled or Served
+    if ((status === "Cancelled" || status === "Served") && endBtn) {
+      endBtn.remove();
+    }
+
+    // Update people-ahead dynamically
+    if (peopleAheadEl) {
+      if (status === "Cancelled" || status === "Served" || status === "Called") {
+        peopleAheadEl.style.display = "none";
+      } else if (peopleAheadCount !== null) {
+        if (peopleAheadCount === 0) {
+          peopleAheadEl.textContent = "No one ahead of you";
+        } else if (peopleAheadCount === 1) {
+          peopleAheadEl.textContent = "1 person ahead of you";
+        } else {
+          peopleAheadEl.textContent = `${peopleAheadCount} people ahead of you`;
+        }
+        peopleAheadEl.style.display = "block";
+      } else {
+        peopleAheadEl.style.display = "block"; // keep existing text
+      }
+    }
+  }
+
+  // Helper function to get CSRF cookie
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  // Ensure correct note, button, and people ahead on page load
+  document.addEventListener("DOMContentLoaded", function() {
+    const initialStatus = "{{ ticket.status }}";
+    const counterNumber = "{{ ticket.counter|default_if_none:'' }}";
+    const peopleAheadCount = {{ people_ahead_count|default:0 }};
+
+    if (initialStatus === "Called") {
+      updateTicketStatus("Called", counterNumber ? parseInt(counterNumber) : null, peopleAheadCount);
+    } else if (initialStatus === "Served" || initialStatus === "Cancelled") {
+      updateTicketStatus(initialStatus, null, peopleAheadCount);
+    } else if (initialStatus === "Waiting") {
+      updateTicketStatus("Waiting", null, peopleAheadCount);
+    }
+  });
+</script>
+
+
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Home</title>
+    <style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        text-align: center;
+        padding-top: 80px;
+        margin: 0;
+    }
+
+    header {
+        background-color: #123B5A;
+        color: white;
+        padding: 20px;
+        height: 30px;
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 40px;
+        margin-top: -80px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+        color: #123B5A;
+        margin-bottom: 15px;
+    }
+
+    .container {
+        background-color: white;
+        display: inline-block;
+        padding: 40px 60px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        max-width: 90%;
+    }
+
+    .btn {
+        display: block;
+        width: 250px;
+        margin: 15px auto;
+        padding: 12px;
+        background-color: #123B5A;
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: bold;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn:hover {
+        background-color: #0f2d44;
+        transform: translateY(-2px);
+    }
+
+    input[type="text"] {
+        width: 220px;
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        margin-bottom: 15px;
+        font-size: 16px;
+    }
+
+    button.btn {
+        width: 250px;
+    }
+
+    @media (max-width: 500px) {
+        .container {
+            padding: 30px 20px;
+            width: 90%;
+        }
+
+        .btn, input[type="text"] {
+            width: 90%;
+        }
+    }
+</style>
+
+</head>
+<body>
+
+    <header>  </header>
+    <div class="container">
+        <h1>Welcome to the Ticket System</h1>
+        
+       
+
+  <form method="get" action="{% url 'queue_status_redirect' %}" style="margin-top: 20px; position: relative; width: 250px; margin-left: auto; margin-right: auto;">
+    <input type="text" name="ticket_number" placeholder="Enter Ticket Number" required
+           style="width: 100%; padding: 10px 35px 10px 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 16px; box-sizing: border-box;">
+    <button type="submit" 
+            style="position: absolute; right: 15px; top: 35%; transform: translateY(-50%); border: none; background: none; cursor: pointer; font-size: 20px;">
+        🔍︎
+    </button>
+</form>
+   <a href="{% url 'scan_qrcode' %}" class="btn">SCAN QR CODE</a>
+
+
+
+    </div>
+</body>
+</html>
