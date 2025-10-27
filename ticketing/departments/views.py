@@ -8,26 +8,31 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from accounts.views import role_required
 
 @login_required
-@role_required('moderator')
+@role_required('Moderator')
 def department_list(request):
     departments = Department.objects.all()
     return render(request, "department_list.html", {"departments": departments})
 
-
+@login_required
+@role_required('Moderator')
 def add_department(request):
     if request.method == "POST":
         form = DepartmentForm(request.POST)
         if form.is_valid():
             form.save()
-            departments = Department.objects.all()
             messages.success(request, "✅ Department Added")
-
-            # return list after save
-        return redirect("department_list")
+            return redirect("department_list")
+        else:
+            # Form is invalid (e.g., duplicate department name)
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, error)  # Show error messages
 
     else:
         form = DepartmentForm()
-        return render(request, "add_department.html", {"form": form})
+
+    # Render the form template with errors if any
+    return render(request, "add_department.html", {"form": form})
     
 
 def update_department(request):

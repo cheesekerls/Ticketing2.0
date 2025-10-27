@@ -1,4 +1,4 @@
-{% extends "main.html" %}
+{% extends "superadmin_dashboard.html" %}
 
 {% block title %}Add Admin{% endblock %}
 
@@ -7,14 +7,7 @@
     <div style="background: #f0f0f0; padding: 30px; border-radius: 10px; width: 400px;">
 
         <!-- Messages -->
-        {% for message in messages %}
-            <div style="padding: 10px; margin-bottom: 10px; border-radius: 5px;
-                        {% if message.tags == 'success' %}background-color: #d4edda; color: #155724;
-                        {% elif message.tags == 'error' %}background-color: #f8d7da; color: #721c24;
-                        {% endif %}">
-                {{ message }}
-            </div>
-        {% endfor %}
+      
 
         <form method="post" action="{% url 'add_admin' %}">
             {% csrf_token %}

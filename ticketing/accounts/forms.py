@@ -25,3 +25,8 @@ class AdminInviteForm(forms.Form):
         if User.objects.filter(email=email).exists():
             raise forms.ValidationError("A user with this email already exists.")
         return email
+      
+    department = forms.ModelChoiceField(
+        queryset=Department.objects.all(),  # will filter later in the view
+        required=True
+    )

@@ -1,4 +1,4 @@
-{% extends "main.html" %}
+{% extends "superadmin_dashboard.html" %}
 
 {% block title %}Employees{% endblock %}
 
@@ -10,6 +10,7 @@
         <tr style="background: #0a3d62; color: white;">
             <th>ID</th>
             <th>Name</th>
+            <th>Email</th>
             <th>Department</th>
             <th>Action</th>
         </tr>
@@ -17,14 +18,15 @@
         <tr>
             <td>{{ emp.employee_id }}</td>
             <td>{{ emp.name }}</td>
+            <td>{{ emp.email }}</td>
             <td>{{ emp.department.department_name }}</td>
             <td>
                 <button style="background:#1e90ff; color:white; border:none; padding:5px 10px; border-radius:3px;"
-                        onclick="openEditModal('{{ emp.id }}', '{{ emp.name }}', '{{ emp.department.department_name }}')">
+                        onclick="openEditModal('{{ emp.employee_id }}', '{{ emp.name }}', '{{ emp.email }}', '{{ emp.department.department_name }}')">
                     Edit
                 </button>
                 <button style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:3px;"
-                        onclick="confirmDelete('{{ emp.id }}')">
+                        onclick="confirmDelete('{{ emp.employee_id }}')">
                     Delete
                 </button>
             </td>
@@ -48,13 +50,14 @@
      background:rgba(0,0,0,0.6); justify-content:center; align-items:center; z-index:999;">
     <div style="background:white; padding:20px; border-radius:10px; width:400px;">
         <h3>Edit Employee</h3>
-        <form id="editForm" method="post" action="{% url 'update_employee' %}">
+        <form id="editForm" method="post" action="{% url 'edit_employee' %}">
             {% csrf_token %}
-            <input type="hidden" id="edit_id" name="id">
             <label>Name:</label><br>
             <input type="text" id="edit_name" name="name" required><br><br>
+            <label>Email:</label><br>
+            <input type="text" id="edit_email" name="email" required><br><br>
             <label>Department:</label><br>
-            <input type="text" id="edit_department" name="department" required><br><br>
+            <input type="text" id="edit_department" name="department_name" required><br><br>
 
             <button type="submit" 
                     style="background:#1e90ff; color:white; border:none; padding:8px 15px; border-radius:5px;">Save</button>
@@ -67,12 +70,12 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 // 🧠 Show edit modal
-function openEditModal(id, name, department) {
+function openEditModal(id, name, email, department_name) {
     const modal = document.getElementById('editModal');
     modal.style.display = 'flex';
-    document.getElementById('edit_id').value = id;
     document.getElementById('edit_name').value = name;
-    document.getElementById('edit_department').value = department;
+    document.getElementById('edit_email').value = email;
+    document.getElementById('edit_department').value = department_name;
 }
 
 // 🧠 Close modal

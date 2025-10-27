@@ -1,12 +1,17 @@
-{% extends "main.html" %}
+{% extends "superadmin_dashboard.html" %}
 
 {% block title %}Add Department{% endblock %}
-
 {% block content %}
 <div class="container mt-4">
   <div class="card shadow-sm p-4" style="max-width: 500px; margin: auto;">
       <h4 class="mb-4 text-center text-primary">Add Department</h4>
-
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+        {{ message }}
+    </div>
+  {% endfor %}
+{% endif %}
       <form method="post" id="deptForm">
           {% csrf_token %}
           <div class="mb-3">
