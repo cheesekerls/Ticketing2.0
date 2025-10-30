@@ -88,8 +88,12 @@ class AuthUser(models.Model):
 
 class Counter(models.Model):
     counter_id = models.AutoField(primary_key=True)
+<<<<<<< HEAD
     username = models.CharField(max_length=100)
     password = models.CharField(max_length=255)
+=======
+    counter_number = models.CharField(max_length=100)
+>>>>>>> createticket
     department = models.ForeignKey(Department, on_delete=models.CASCADE)
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE)
     service = models.ForeignKey(

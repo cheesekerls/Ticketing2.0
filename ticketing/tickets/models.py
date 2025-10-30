@@ -7,15 +7,12 @@ from services.models import Service
 class Ticket(models.Model):
     ticket_id = models.AutoField(primary_key=True)
     ticket_number = models.CharField(max_length=20)
-    priority = models.CharField(max_length=50, blank=True, null=True)
+    lane= models.CharField(max_length=50, blank=True, null=True)
     status = models.CharField(max_length=50, blank=True, null=True)
-    service = models.ForeignKey(
-        Service,
-        on_delete=models.CASCADE,
-        to_field='id',  # ✅ Explicitly link to Service.id (the real PK)
-        db_column='service_id',  # ✅ keeps consistent DB column name
-    )
+    service = models.ForeignKey(Service, on_delete=models.CASCADE)
     created_at = models.DateTimeField(default=timezone.now, editable=False)
+    queue_position = models.IntegerField(default=0)
+
 
     def __str__(self):
         return self.ticket_number

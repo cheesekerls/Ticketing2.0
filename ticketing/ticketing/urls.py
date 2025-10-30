@@ -25,11 +25,19 @@ urlpatterns = [
     path('departments/', include('departments.urls')),
     path('services/', include('services.urls')),
     path('tickets/', include('tickets.urls')),
+<<<<<<< HEAD
     path('accounts/', include('django.contrib.auth.urls')),  # <-- put it here
     path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(
         template_name='registration/password_reset_confirm.html',
         success_url='/login/'
     ), name='password_reset_confirm'),
+=======
+    path('accounts/', include('django.contrib.auth.urls')), 
+    path('counter/', include('counter.urls')),
+    path('user/', include('user.urls')),
+
+
+>>>>>>> createticket
 
     # Optional: redirect root to accounts page
     path('', include('accounts.urls')),

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Scan QR Code</title>
+    <script src="https://unpkg.com/jsqr/dist/jsQR.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 30px;
+            background-color: #f8f8f8;
+        }
+        header {
+      background-color: #123B5A;
+      color: white;
+      padding: 15px 30px;
+      height: 30px;
+      font-size: 22px;
+      font-weight: bold;
+      margin-top: -30px;
+    }
+
+        h1 {
+            color: #333;
+        }
+        #video {
+            width: 400px;
+            height: 300px;
+            border: 3px solid #cccccc;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            background-color: black;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 10px;
+            background-color: #cccccc;
+            color: black;
+            text-decoration: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #aaaaaa;
+        }
+    </style>
+</head>
+<body>
+
+    <header> </header>
+    <h1>Scan QR Code</h1>
+
+    <video id="video" autoplay></video>
+    <canvas id="canvas" hidden></canvas>
+
+    <div>
+        <a href="{% url 'user_home' %}" class="btn">Back to Home</a>
+        <button id="stopBtn" class="btn">Stop Scanning</button>
+    </div>
+
+    <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const context = canvas.getContext('2d');
+    const stopBtn = document.getElementById('stopBtn');
+
+    let stream = null;
+    let scanning = true;
+
+    // Start camera
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+        .then(s => { 
+            stream = s; 
+            video.srcObject = stream; 
+            video.play();
+            requestAnimationFrame(scanQRCode);
+        })
+        .catch(err => alert("Camera error: " + err.message));
+
+    function scanQRCode() {
+        if (!scanning) return;
+
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, canvas.width, canvas.height);
+
+            if (code && code.data) {
+                const ticketNumber = code.data.trim();
+                if (ticketNumber !== "") {
+                    scanning = false;
+                    stopCamera();
+                    window.location.href = `/user/ticket/${ticketNumber}/`;
+                    return;
+                }
+            }
+        }
+
+        requestAnimationFrame(scanQRCode);
+    }
+
+    function stopCamera() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+        }
+    }
+
+    stopBtn.addEventListener('click', () => {
+        scanning = false;
+        stopCamera();
+        alert("Scanning stopped.");
+    });
+    </script>
+</body>
+</html>
