@@ -50,15 +50,16 @@ def role_required(allowed_roles):
 
 
 def department_admin_required(view_func):
+    """Ensures only the admin of their assigned department can access."""
     @wraps(view_func)
-    def _wrapped(request, department_id=None, *args, **kwargs):
+    def _wrapped(request, *args, **kwargs):
 
         # ✅ If logged in as Moderator, allow all departments
         if request.user and not isinstance(request.user, AnonymousUser):
             try:
                 profile = UserProfile.objects.get(user=request.user)
-                if profile.role.lower() == "Moderator":
-                    return view_func(request, department_id=department_id, *args, **kwargs)
+                if profile.role.lower() == "moderator":
+                    return view_func(request, *args, **kwargs)
             except UserProfile.DoesNotExist:
                 pass
 
@@ -74,17 +75,12 @@ def department_admin_required(view_func):
             messages.error(request, "Access denied: You are not a valid employee.")
             return redirect("login")
 
-        # Check if Admin
+        # ✅ Check if Admin
         if employee.position != "Admin":
             messages.error(request, "Access denied: Only admins can access this section.")
             return redirect("forbidden")
 
-        # Check if department matches
-        if department_id and employee.department_id != int(department_id):
-            messages.error(request, "Access denied: You cannot access other departments.")
-            return redirect("forbidden")
-
-        # ✅ If valid admin for department
-        return view_func(request, department_id=department_id, *args, **kwargs)
+        # ✅ At this point, admin is valid — no need to pass department_id
+        return view_func(request, *args, **kwargs)
 
     return _wrapped

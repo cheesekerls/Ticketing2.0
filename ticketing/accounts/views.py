@@ -1,4 +1,3 @@
-# accounts/views.py
 import sys
 from urllib import request
 from django.shortcuts import render, redirect, get_object_or_404
@@ -30,10 +29,14 @@ from django.contrib.auth.hashers import make_password
 from accounts.decorators import department_admin_required, role_required
 from django.contrib.auth.hashers import check_password
 from django.contrib.auth import authenticate, login, logout
-
 import secrets
-
+from accounts.models import Employee as StaffEmployee  # rename to avoid clash
+from .forms import ChangePasswordForm
+from accounts.models import Employee  # or your Admin user model
+from services.models import Service
+from accounts.models import Counter
 User = get_user_model()
+
 
 def universal_login(request):
     if request.method == "POST":
@@ -50,9 +53,6 @@ def universal_login(request):
         if user is not None:
             login(request, user)
             request.session["email"] = user.email  
-             # ✅ Debug session
-           
-
             return redirect("moderator_dashboard")
 
         # ✅ Try custom Employee login (Admin & Staff)
@@ -65,18 +65,18 @@ def universal_login(request):
         if not check_password(password, employee.password):
             messages.error(request, "Invalid password")
             return render(request, "login.html")
-         # ✅ Save session info
+
+        # ✅ Save session info
         request.session['employee_id'] = employee.employee_id
         request.session['employee_position'] = employee.position
         request.session['employee_department'] = (
             employee.department.department_id if employee.department else None
         )
-        # ✅ Login custom employee
         request.session["email"] = employee.email
 
         # ✅ Redirect based on custom roles
         if employee.position == "Admin":
-            return redirect("admin_dashboard", department_id=employee.department.department_id)
+            return redirect("admin_dashboard")  # ✅ FIXED: removed department_id
         elif employee.position == "Staff":
             return redirect("staff_dashboard")
 
@@ -85,43 +85,61 @@ def universal_login(request):
 
     return render(request, "login.html")
 
-def custom_logout(request):
-    logout(request)  # Django logout clears auth
-    request.session.flush()  # Clear custom session for Employee
-    return redirect("login")
 
+def custom_logout(request):
+    logout(request)
+    request.session.flush()
+    return redirect("login")
 
 @role_required(["Moderator"])
 def moderator_dashboard(request):
-    return render(request, "Superadmin_dashboard.html")
+    total_departments = Department.objects.count()
+    total_admins = Employee.objects.filter(position='Admin').count()  # assuming position='admin'
 
-@role_required(["Admin"])
-@role_required('Admin')
+    # For chart
+    departments = Department.objects.all()
+    department_labels = [dept.department_name for dept in departments]
+    admins_counts = [Employee.objects.filter(position='Admin', department=dept).count() for dept in departments]
+
+    # Get all admins for table
+    admins = Employee.objects.filter(position='Admin').select_related('department')
+
+    context = {
+        'total_departments': total_departments,
+        'total_admins': total_admins,
+        'department_labels': department_labels,
+        'admins_counts': admins_counts,
+        'admins': admins
+    }
+
+    return render(request, 'superadmin_dashboard.html', context)
 @role_required('Admin')
 @department_admin_required
-def admin_dashboard(request, department_id):
-    employee = Employee.objects.get(email=request.session.get("email"))
-    department = employee.department
+def admin_dashboard(request):
+    total_services = Service.objects.count()
 
-    return render(request, "admin_dashboard.html", {
-        "employee": employee,
-        "department": department
-    })
+    context = {
+        'total_services': total_services,
+    }
+    return render(request, 'admin_dashboard.html', context)
+
 
 @department_admin_required
 def department_dashboard(request, department_id):
-    # Only the admin of this department can view this
     employee = Employee.objects.get(email=request.session.get("email"))
     return render(request, 'admin_dashboard.html', {"employee": employee})
+
 
 @role_required(["Staff"])
 def staff_dashboard(request):
     return render(request, "staff_dashboard.html")
-    
+
+
 @role_required("Moderator")
 def admin_list(request):
     employees = Employee.objects.all()
     return render(request, "admin_list.html", {"employees": employees})
+
 
 def forbidden_view(request):
     return render(request, '403.html', status=403)
@@ -139,6 +157,26 @@ def edit_employee(request):
 
     return redirect('admin_list')
 
+def admin_change_password(request):
+    user_id = request.session.get('employee_id')  # your custom admin session
+    if not user_id:
+        return redirect('login')
+
+    user = Employee.objects.get(pk=user_id)
+
+    if request.method == "POST":
+        form = ChangePasswordForm(user, request.POST)
+        if form.is_valid():
+            user.set_password(form.cleaned_data['new_password1'])
+            user.save()
+            messages.success(request, "Password updated successfully!")
+            return redirect('admin_dashboard')
+    else:
+        form = ChangePasswordForm(user)
+
+    return render(request, 'change_password.html', {'form': form})
+
+
 def delete_employee(request, emp_id):
     employee = get_object_or_404(Employee, pk=emp_id)
     employee.delete()
@@ -146,16 +184,27 @@ def delete_employee(request, emp_id):
     return redirect('admin_list')
 
 
-from .forms import AdminInviteForm
-
-User = get_user_model()
-
 def employee_list(request):
-   return render(request, 'admin_employee.html')
+    employee_id = request.session.get('employee_id')
+    employee = get_object_or_404(Employee, pk=employee_id)
 
+    employees = StaffEmployee.objects.filter(department=employee.department)
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return render(request, 'employee_list.html', {
+            'employees': employees,
+        })
+
+    return render(request, 'admin_dashboard.html', {
+        'department': employee.department,
+        'employee': employee,
+        'initial_page': 'employee_list',
+        'employees': employees
+    })
 
 def reports(request):
     return render(request, 'reports.html')
+
 
 @login_required
 @role_required('Moderator')
@@ -167,7 +216,7 @@ def add_admin(request):
 
     departments_with_admin = Employee.objects.filter(position='Admin').values_list('department_id', flat=True)
 
-  # ✅ Only show departments that do NOT have an Admin yet
+    # ✅ Only show departments that do NOT have an Admin yet
     form.fields['department'].queryset = Department.objects.exclude(department_id__in=departments_with_admin)
 
     if request.method == 'POST' and form.is_valid():
@@ -208,7 +257,7 @@ def add_admin(request):
         msg.send()
 
         messages.success(request, f"Admin '{name}' invited! A password setup email has been sent.")
-        return redirect('employee_list')
+        return redirect('admin_list')
 
     return render(request, 'add_admin_department.html', {'form': form})
 
@@ -225,7 +274,7 @@ def set_password(request, token):
             return redirect(request.path)
 
         employee.set_password(password)
-        employee.password_reset_token = None  # Clear token after use
+        employee.password_reset_token = None
         employee.save()
 
         messages.success(request, "Password set successfully! You can now log in.")

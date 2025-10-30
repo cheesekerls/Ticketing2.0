@@ -1,126 +1,156 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Services</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background: #f0f0f0;
-            color: #333; 
-        }
-        h1 {
-            text-align: center;
-            color: #222;
-        }
-        .services-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 20px;
-            max-width: 1000px;
-            margin: auto;
-        }
-        .service-box {
-            background: #fff; 
-            border: 1px solid #ccc; 
-            border-radius: 10px;
-            width: 220px;
-            padding: 15px;
-            height: 150px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .service-name {
-            font-weight: bold;
-            font-size: 22px;
-            text-align: center;
-            margin-bottom: 10px;
-            color: #111;
-        }
-        .service-actions {
-            display: flex;
-            justify-content: center; /* center buttons */
-            gap: 5px;
-        }
-        .service-actions button {
-            flex: 1; /* make buttons stretch equally */
-            padding: 8px 10px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            background-color: #ccc; 
-            color: #111; 
-        }
-        .service-actions button:hover {
-            background-color: #999; 
-        }
-        .manage-services {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-        }
-        .manage-services button {
-            background: #ccc; 
-            color: #111;
-            padding: 10px 20px;
-            font-size: 15px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-        .manage-services button:hover {
-            background: #999;
-        }
-    </style>
+{% extends "admin_dashboard.html" %}
 
-    <script>
-        function confirmTicket(serviceId) {
-            if (!serviceId) {
-                alert("This service is not available.");
-                return;
-            }
-            if (confirm("Do you want to create a ticket for this service?")) {
-                window.location.href = "/ticket/" + serviceId + "/";
-            }
-        }
+{% block title %}Services{% endblock %}
 
-        {% comment %} function confirmDelete(serviceId) {
-            if (confirm("Are you sure you want to delete this service?")) {
-                window.location.href = "/delete_service/" + serviceId + "/";
-            }
-        } {% endcomment %}
-    </script>
+{% block content %}
+<div class="content-area" style="max-width:1000px; margin:0 auto;">
 
-</head>
-<body>
-    <h1>Available Services</h1>
+    <!-- Card container -->
+    <div style="background:#ffffff; padding:25px 30px; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.08);">
 
-    <div class="services-container">
-        {% for service in services %}
-            <div class="service-box">
-                <div class="service-name">{{ service.service_name }}</div>
-                <div class="service-actions">
-                    <button onclick="confirmTicket({{ service.service_id|default:'null' }})">
-                        Create Ticket
+        <h2 style="margin-bottom:20px; color:#1e3a5f; font-weight:700;">Services</h2>
+
+        <!-- Desktop Table -->
+        <div class="desktop-table" style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; min-width:600px;">
+                <thead>
+                    <tr style="background:#1e3a5f; color:white; text-align:left;">
+                        <th style="padding:10px 12px;">Service ID</th>
+                        <th style="padding:10px 12px;">Service Name</th>
+                        <th style="padding:10px 12px;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for service in services %}
+                    <tr style="border-bottom:1px solid #ddd;">
+                        <td style="padding:10px 12px;">{{ service.service_id }}</td>
+                        <td style="padding:10px 12px;">{{ service.service_name }}</td>
+                        <td style="padding:10px 12px; white-space:nowrap;">
+                            <button 
+                                style="background:#1e3a5f; color:white; border:none; padding:6px 12px; border-radius:6px; margin-right:5px; cursor:pointer; font-size:0.9rem;"
+                                onclick="openEditModal('{{ service.id }}', '{{ service.service_name }}')">
+                                Edit
+                            </button>
+                            <button 
+                                style="background:#dc3545; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.9rem;"
+                                onclick="confirmDelete('{{ service.id }}')">
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" style="text-align:center; padding:15px;">No services found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Mobile Cards -->
+        <div class="mobile-cards" style="display:none; gap:15px; flex-direction:column;">
+            {% for service in services %}
+            <div style="background:#f8f9fa; padding:15px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.05);">
+                <p><strong>ID:</strong> {{ service.service_id }}</p>
+                <p><strong>Name:</strong> {{ service.service_name }}</p>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button 
+                        style="flex:1; background:#1e3a5f; color:white; border:none; padding:8px 0; border-radius:6px; font-weight:500; cursor:pointer;"
+                        onclick="openEditModal('{{ service.id }}', '{{ service.service_name }}')">
+                        Edit
+                    </button>
+                    <button 
+                        style="flex:1; background:#dc3545; color:white; border:none; padding:8px 0; border-radius:6px; font-weight:500; cursor:pointer;"
+                        onclick="confirmDelete('{{ service.id }}')">
+                        Delete
                     </button>
                 </div>
             </div>
-        {% empty %}
-            <p>No services available.</p>
-        {% endfor %}
-        <a href="{% url 'add_service' %}">
-            <button>Add New Service</button>
-        </a>
-    </div>
+            {% empty %}
+            <p style="text-align:center; padding:10px;">No services found.</p>
+            {% endfor %}
+        </div>
 
-    {% comment %} <div class="manage-services">
-        <a href="{% url 'manage_services' %}">
-            <button>Manage Services</button>
-        </a>
-    </div> {% endcomment %}
-</body>
-</html>
+        <!-- Add Service -->
+        <div style="margin-top:25px; text-align:right;">
+            <a href="{% url 'add_service' %}" 
+               style="background: #1e3a5f; color: white; padding:10px 20px; border-radius:8px; text-decoration:none; font-weight:600;">
+               + Add Service
+            </a>
+        </div>
+
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal" 
+     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+     background:rgba(0,0,0,0.6); justify-content:center; align-items:center; z-index:999; padding:10px;">
+    <div style="background:white; padding:25px 30px; border-radius:12px; width:100%; max-width:400px; box-shadow:0 4px 15px rgba(0,0,0,0.2);">
+        <h3 style="margin-bottom:20px; color:#1e3a5f;">Edit Service</h3>
+
+        <form id="editForm" method="post" action="">
+            {% csrf_token %}
+            <input type="hidden" id="edit_id" name="service_id" style="display:none;">
+            <div style="display:flex; flex-direction:column; gap:12px;">
+                <label for="edit_name" style="font-weight:600; color:#333;">Service Name</label>
+                <input type="text" id="edit_name" name="service_name" required
+                       style="padding:10px; border:1px solid #ccc; border-radius:8px; font-size:14px; outline:none; width:100%;">
+            </div>
+            <div style="margin-top:20px; display:flex; gap:12px; justify-content:flex-end; flex-wrap:wrap;">
+                <button type="submit" 
+                        style="background:#1e3a5f; color:white; border:none; padding:10px 18px; border-radius:8px; font-weight:600; cursor:pointer;">
+                    Save
+                </button>
+                <button type="button" onclick="closeEditModal()" 
+                        style="background:#ccc; color:black; border:none; padding:10px 18px; border-radius:8px; font-weight:600; cursor:pointer;">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+function openEditModal(id, name) {
+    const modal = document.getElementById('editModal');
+    modal.style.display = 'flex';
+    document.getElementById('edit_id').value = id;
+    document.getElementById('edit_name').value = name;
+    document.getElementById('editForm').action = `/services/${id}/edit/`;
+}
+
+function closeEditModal() {
+    document.getElementById('editModal').style.display = 'none';
+}
+
+function confirmDelete(id) {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "This action cannot be undone!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = `/services/${id}/delete/`;
+        }
+    });
+}
+
+// ✅ Toggle table/cards based on screen size
+function toggleResponsive() {
+    const width = window.innerWidth;
+    document.querySelector('.desktop-table').style.display = width > 768 ? 'block' : 'none';
+    document.querySelector('.mobile-cards').style.display = width <= 768 ? 'flex' : 'none';
+}
+
+// Initialize
+toggleResponsive();
+window.addEventListener('resize', toggleResponsive);
+</script>
+
+{% endblock %}
