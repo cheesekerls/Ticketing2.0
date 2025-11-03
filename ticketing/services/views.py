@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponseForbidden
 from .models import Service
 from accounts.models import Employee  # adjust if your Employee model is elsewhere
-
+from accounts.decorators import role_required, department_admin_required
 
 def service_list(request):
     """Show only services from the logged-in employee's department."""

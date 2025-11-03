@@ -19,7 +19,7 @@ def role_required(allowed_roles):
             if request.user and not isinstance(request.user, AnonymousUser):
                 try:
                     profile = UserProfile.objects.get(user=request.user)
-                    if profile.role.capitalize() in allowed_roles:
+                    if profile.role.capitalize() in [r.capitalize() for r in allowed_roles]:
                         return view_func(request, *args, **kwargs)
                     else:
                         messages.error(request, "Access denied for your role.")
@@ -27,12 +27,12 @@ def role_required(allowed_roles):
                 except UserProfile.DoesNotExist:
                     pass  # fall through to Employee check
 
-            # ✅ 2. Admin / Staff (Employee)
+            # ✅ 2. Admin / Staff (Employee-based login)
             email = request.session.get("email")
             if email:
                 try:
                     employee = Employee.objects.get(email=email)
-                    if employee.position in allowed_roles:
+                    if employee.position.capitalize() in [r.capitalize() for r in allowed_roles]:
                         return view_func(request, *args, **kwargs)
                     else:
                         return HttpResponseForbidden("Access denied for your role.")
@@ -40,7 +40,7 @@ def role_required(allowed_roles):
                     messages.error(request, "User not found.")
                     return redirect("login")
 
-            # ✅ 3. Not logged in
+            # ✅ 3. Not logged in at all
             messages.error(request, "Please log in to continue.")
             return redirect("login")
 
@@ -54,7 +54,7 @@ def department_admin_required(view_func):
     @wraps(view_func)
     def _wrapped(request, *args, **kwargs):
 
-        # ✅ If logged in as Moderator, allow all departments
+        # ✅ Allow Moderators full access
         if request.user and not isinstance(request.user, AnonymousUser):
             try:
                 profile = UserProfile.objects.get(user=request.user)
@@ -63,7 +63,7 @@ def department_admin_required(view_func):
             except UserProfile.DoesNotExist:
                 pass
 
-        # ✅ For Admin/Employee logins
+        # ✅ For Admin/Employee session logins
         email = request.session.get("email")
         if not email:
             messages.error(request, "You must log in first.")
@@ -75,12 +75,14 @@ def department_admin_required(view_func):
             messages.error(request, "Access denied: You are not a valid employee.")
             return redirect("login")
 
-        # ✅ Check if Admin
-        if employee.position != "Admin":
+        # ✅ Check if Admin position
+        if employee.position.lower() != "admin":
             messages.error(request, "Access denied: Only admins can access this section.")
             return redirect("forbidden")
 
-        # ✅ At this point, admin is valid — no need to pass department_id
+        # ✅ Optionally attach department to request for convenience
+        request.department = employee.department
+
         return view_func(request, *args, **kwargs)
 
     return _wrapped
