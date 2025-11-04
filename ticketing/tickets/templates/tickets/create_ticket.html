@@ -64,46 +64,70 @@
       transition: background-color 0.3s;
     }
 
-    .btn-regular {
+    .btn-get {
       background-color:#123B5A;
-    }
-
-    .btn-priority {
-      background-color: #123B5A;
     }
 
     .btn:hover {
       opacity: 0.9;
     }
 
-    .message {
-      text-align: center;
-      color: green;
-      font-weight: bold;
-      margin-top: 20px;
+    /* Popup Modal */
+    .modal {
+      display: none; 
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.4);
     }
 
-    .error {
+    .modal-content {
+      background-color: #fff;
+      margin: 15% auto;
+      padding: 30px;
+      border-radius: 10px;
+      width: 320px;
       text-align: center;
-      color: red;
-      font-weight: bold;
-      margin-top: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     }
 
-    /* Floating notice in the center */
+    .modal-content h3 {
+      color: #123B5A;
+      margin-bottom: 20px;
+    }
+
+    .modal-btn {
+      background-color: #123B5A;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      margin: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .modal-btn:hover {
+      opacity: 0.9;
+    }
+
+    /* Floating notice */
     .print-notice {
-      display: none; /* hidden by default */
+      display: none;
       position: fixed;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background-color: #4CAF50; /* green for success */
+      background-color: #4CAF50;
       color: white;
       font-weight: bold;
       padding: 20px 40px;
       border-radius: 10px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-      z-index: 1000;
+      z-index: 2000;
       font-size: 20px;
       text-align: center;
       animation: fadeInOut 3s forwards;
@@ -127,40 +151,60 @@
     {% for s in services %}
       <div class="service-box">
         <h3>{{ s.service_name }}</h3>
-
-        <!-- Regular Ticket Form -->
-        <form method="post" action="{% url 'print_ticket_no_service' %}">
-          {% csrf_token %}
-          <input type="hidden" name="service_id" value="{{ s.service_id }}">
-          <input type="hidden" name="ticket_type" value="Regular">
-          <button type="submit" class="btn btn-regular">Regular</button>
-        </form>
-
-        <!-- Priority Ticket Form -->
-        <form method="post" action="{% url 'print_ticket_no_service' %}">
-          {% csrf_token %}
-          <input type="hidden" name="service_id" value="{{ s.service_id }}">
-          <input type="hidden" name="ticket_type" value="Priority">
-          <button type="submit" class="btn btn-priority">Priority</button>
-        </form>
+        <button class="btn btn-get" onclick="openModal('{{ s.service_id }}')">Get Ticket</button>
       </div>
     {% endfor %}
   </div>
 
-  
- 
+  <!-- Modal Popup -->
+  <div id="ticketModal" class="modal">
+    <div class="modal-content">
+      <h3>Select Ticket Type</h3>
+      <form id="ticketForm" method="post" action="{% url 'print_ticket_no_service' %}">
+        {% csrf_token %}
+        <input type="hidden" name="service_id" id="serviceIdField">
+        <input type="hidden" name="ticket_type" id="ticketTypeField">
+        <button type="button" class="modal-btn" onclick="submitTicket('Regular')">Regular</button>
+        <button type="button" class="modal-btn" onclick="submitTicket('Priority')">Priority</button>
+      </form>
+      <button type="button" class="modal-btn" style="background-color: gray;" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
 
-  <!-- Floating center notice -->
+  <!-- Floating notice -->
   <div id="print-notice" class="print-notice">
     Ticket successfully printed!
   </div>
 
   <script>
-    window.addEventListener('DOMContentLoaded', (event) => {
+    let selectedServiceId = null;
+
+    function openModal(serviceId) {
+      selectedServiceId = serviceId;
+      document.getElementById('ticketModal').style.display = 'block';
+    }
+
+    function closeModal() {
+      document.getElementById('ticketModal').style.display = 'none';
+    }
+
+    function submitTicket(type) {
+      document.getElementById('serviceIdField').value = selectedServiceId;
+      document.getElementById('ticketTypeField').value = type;
+      document.getElementById('ticketForm').submit();
+    }
+
+    window.onclick = function(event) {
+      const modal = document.getElementById('ticketModal');
+      if (event.target === modal) {
+        modal.style.display = 'none';
+      }
+    };
+
+    window.addEventListener('DOMContentLoaded', () => {
       {% if message and "successfully printed" in message %}
         const notice = document.getElementById('print-notice');
         notice.style.display = 'block';
-        // auto-hide after 3 seconds
         setTimeout(() => {
           notice.style.display = 'none';
         }, 3000);

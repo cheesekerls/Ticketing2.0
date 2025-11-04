@@ -27,9 +27,12 @@ urlpatterns = [
     path('accounts/', include('django.contrib.auth.urls')), 
     path('counter/', include('counter.urls')),
     path('user/', include('user.urls')),
+<<<<<<< Updated upstream
 
 
 
     # Optional: redirect root to accounts page
+=======
+>>>>>>> Stashed changes
     path('', include('accounts.urls')),
 ]
