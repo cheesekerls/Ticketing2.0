@@ -2,8 +2,12 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('', views.queue_dashboard, name='queue_dashboard'),
-    path('call-next/', views.call_next_ticket, name='call_next_ticket'),
-    path('skip/<str:ticket_number>/', views.skip_ticket, name='skip_ticket'),
-    path('counter/cancel/<str:ticket_number>/', views.cancel_ticket, name='cancel_ticket'),
+    path('list/', views.counter_list, name='counter_list'),
+    path('add/', views.add_counter, name='add_counter'),
+    path('queue_dashboard/', views.queue_dashboard, name='queue_dashboard'),
+    path('call_next_ticket/', views.call_next_ticket, name='call_next_ticket'),
+    path('skip_ticket/<str:ticket_number>/', views.skip_ticket, name='skip_ticket'),
+    path('cancel_ticket/<str:ticket_number>/', views.cancel_ticket, name='cancel_ticket'),
+    path('counter/edit/<int:counter_id>/', views.edit_counter, name='edit_counter'),
+    path('counter/delete/<int:counter_id>/', views.delete_counter, name='delete_counter'),
 ]

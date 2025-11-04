@@ -34,57 +34,80 @@ from accounts.models import Employee as StaffEmployee  # rename to avoid clash
 from .forms import ChangePasswordForm
 from accounts.models import Employee  # or your Admin user model
 from services.models import Service
-from accounts.models import Counter
+from counter.models import Counter
+
 User = get_user_model()
 
 
 def universal_login(request):
     if request.method == "POST":
-        email = request.POST.get("email")
+        identifier = request.POST.get("email")  # can be email OR username
         password = request.POST.get("password")
 
-        # ✅ Try Django built-in user (Moderator login using email)
+        # ========== 1️⃣ MODERATOR (Django built-in User) ==========
+        user = None
         try:
-            user = User.objects.get(email=email)
-            user = authenticate(request, username=user.username, password=password)
-        except User.DoesNotExist:
+            # detect if identifier looks like an email
+            if "@" in identifier:
+                user_obj = User.objects.filter(email=identifier).first()
+            else:
+                user_obj = User.objects.filter(username=identifier).first()
+
+            if user_obj:
+                user = authenticate(request, username=user_obj.username, password=password)
+        except Exception:
             user = None
 
         if user is not None:
             login(request, user)
-            request.session["email"] = user.email  
+            request.session["email"] = user.email
             return redirect("moderator_dashboard")
 
-        # ✅ Try custom Employee login (Admin & Staff)
+        # ========== 2️⃣ EMPLOYEE (Admin / Staff) ==========
+        employee = None
         try:
-            employee = Employee.objects.get(email=email)
-        except Employee.DoesNotExist:
-            messages.error(request, "Invalid email or password")
-            return render(request, "login.html")
+            if "@" in identifier:
+                employee = Employee.objects.filter(email=identifier).first()
+            else:
+                employee = Employee.objects.filter(username=identifier).first() if hasattr(Employee, "username") else None
+        except Exception:
+            employee = None
 
-        if not check_password(password, employee.password):
-            messages.error(request, "Invalid password")
-            return render(request, "login.html")
+        if employee and check_password(password, employee.password):
+            request.session["employee_id"] = employee.employee_id
+            request.session["employee_position"] = employee.position
+            request.session["employee_department"] = (
+                employee.department.department_id if employee.department else None
+            )
+            request.session["email"] = employee.email
 
-        # ✅ Save session info
-        request.session['employee_id'] = employee.employee_id
-        request.session['employee_position'] = employee.position
-        request.session['employee_department'] = (
-            employee.department.department_id if employee.department else None
-        )
-        request.session["email"] = employee.email
+            if employee.position == "Admin":
+                return redirect("admin_dashboard")
+            elif employee.position == "Staff":
+                return redirect("staff_dashboard")
+            else:
+                messages.error(request, "No dashboard assigned for this role.")
+                return render(request, "login.html")
 
-        # ✅ Redirect based on custom roles
-        if employee.position == "Admin":
-            return redirect("admin_dashboard")  # ✅ FIXED: removed department_id
-        elif employee.position == "Staff":
-            return redirect("staff_dashboard")
+        # ========== 3️⃣ COUNTER (Queue Users) ==========
+        counter = None
+        try:
+            if "@" in identifier and hasattr(Counter, "email"):
+                counter = Counter.objects.filter(email=identifier).first()
+        except Exception:
+            counter = None
 
-        messages.error(request, "No dashboard assigned for this role")
+        if counter:
+            # support both hashed and plain passwords
+              if check_password(password, counter.password) or counter.password == password:
+                request.session["email"] = counter.email  # use email as identifier
+                return redirect("queue_dashboard")
+
+        # ========== ❌ NO MATCH ==========
+        messages.error(request, "Invalid username/email or password")
         return render(request, "login.html")
 
     return render(request, "login.html")
-
 
 def custom_logout(request):
     logout(request)
@@ -116,12 +139,22 @@ def moderator_dashboard(request):
 @role_required('Admin')
 @department_admin_required
 def admin_dashboard(request):
-    total_services = Service.objects.count()
+    employee_id = request.session.get('employee_id')
+    if not employee_id:
+        return redirect('login')
+
+    employee = get_object_or_404(Employee, pk=employee_id)
+
+    # ✅ Only count services belonging to this admin's department
+    total_services = Service.objects.filter(department=employee.department).count()
+    total_users = Counter.objects.filter(department=employee.department).count()
 
     context = {
         'total_services': total_services,
+        'total_users': total_users,
     }
     return render(request, 'admin_dashboard.html', context)
+
 
 
 @department_admin_required
@@ -184,23 +217,6 @@ def delete_employee(request, emp_id):
     return redirect('admin_list')
 
 
-def employee_list(request):
-    employee_id = request.session.get('employee_id')
-    employee = get_object_or_404(Employee, pk=employee_id)
-
-    employees = StaffEmployee.objects.filter(department=employee.department)
-
-    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        return render(request, 'employee_list.html', {
-            'employees': employees,
-        })
-
-    return render(request, 'admin_dashboard.html', {
-        'department': employee.department,
-        'employee': employee,
-        'initial_page': 'employee_list',
-        'employees': employees
-    })
 
 def reports(request):
     return render(request, 'reports.html')
@@ -281,3 +297,14 @@ def set_password(request, token):
         return redirect('login')
 
     return render(request, 'set_password.html', {'employee': employee})
+
+@role_required('Admin')
+@department_admin_required
+def counter_list(request):
+    employee = Employee.objects.get(pk=request.session.get("employee_id"))
+    counters = Counter.objects.filter(department=employee.department)
+
+    context = {
+        'counters': counters
+    }
+    return render(request, 'counter_list.html', context)

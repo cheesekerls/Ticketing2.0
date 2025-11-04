@@ -19,7 +19,7 @@ class Ticket(models.Model):
 
 
 class Contact(models.Model):
-    ticket = models.ForeignKey("tickets.Ticket", on_delete=models.CASCADE)
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE)
     email = models.EmailField()
     contact_no = models.CharField(max_length=20)
 
@@ -28,7 +28,7 @@ class Contact(models.Model):
 
 
 class ClaimedTicket(models.Model):
-    ticket = models.ForeignKey("tickets.Ticket", on_delete=models.CASCADE)
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE)
     called_at = models.DateTimeField(auto_now_add=True)
     served_at = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=50)
