@@ -4,11 +4,11 @@ from departments.models import Department
 
 class CompServices(models.Model):
     comp_id = models.AutoField(primary_key=True)
-    ip_address = models.CharField(max_length=50)
-    mac_address = models.CharField(max_length=50)
+    ip_address = models.CharField(max_length=50, unique=True)
+    mac_address = models.CharField(max_length=50, unique=True)
 
     def __str__(self):
-        return str(self.comp_id)
+        return f"Kiosk {self.comp_id} ({self.ip_address})"
 
 class Service(models.Model):
     id = models.AutoField(primary_key=True)
