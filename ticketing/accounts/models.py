@@ -92,16 +92,24 @@ class AuthUser(models.Model):
 class Counter(models.Model):
     counter_id = models.AutoField(primary_key=True)
     counter_number = models.CharField(max_length=100)
-    department = models.ForeignKey(Department, on_delete=models.CASCADE)
-    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE)
+    department = models.ForeignKey(
+        Department, 
+        on_delete=models.CASCADE, 
+        related_name='accounts_counter_department'
+    )
+    ticket = models.ForeignKey(
+        Ticket, 
+        on_delete=models.CASCADE, 
+        related_name='accounts_counter_ticket'
+    )
     service = models.ForeignKey(
-        Service,
-        on_delete=models.CASCADE,
-        to_field='id',
-        db_column='service_id',
+        Service, 
+        on_delete=models.CASCADE, 
         null=True,
         blank=True,
+        related_name='accounts_counter_service'
     )
+
 
     def __str__(self):
         return f"{self.counter_number} ({self.department})"
