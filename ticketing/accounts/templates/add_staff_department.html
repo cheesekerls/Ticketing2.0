@@ -3,9 +3,9 @@
 {% block title %}Add Admin{% endblock %}
 
 {% block content %}
-<div style="display: flex; justify-content: center; margin-top: 50px;">
-    <div style="background: #f0f0f0; padding: 30px; border-radius: 10px; width: 400px;">
-
+<div style="display: flex; justify-content: center; align-items: center; min-height: 80vh; background: #f9fafb;">
+  <div style="background: white; padding: 35px 40px; border-radius: 12px; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1); width: 420px;">
+    <h2 style="text-align: center; color: #0d5c7d; margin-bottom: 25px;">Add Admin</h2>
         <!-- Show messages -->
         <div style="margin-bottom: 20px;">
             {% for message in messages %}
@@ -17,6 +17,16 @@
                     {{ message }}
                 </div>
             {% endfor %}
+        <!-- ✅ Show success/error/warning messages here -->
+   {% if messages %}
+<div style="margin-bottom: 20px;">
+    {% for message in messages %}
+        <div style="padding: 10px; border-radius: 5px; margin-bottom: 10px;
+                    {% if message.tags == 'success' %}background-color: #d4edda; color: #155724;
+                    {% elif message.tags == 'error' %}background-color: #f8d7da; color: #721c24;
+                    {% elif message.tags == 'warning' %}background-color: #fff3cd; color: #856404;
+                    {% endif %}">
+            {{ message }}
         </div>
 
         <form method="post" action="{% url 'add_admin' %}">
@@ -48,5 +58,73 @@
         </form>
 
     </div>
+    <!-- ✅ Flash Messages -->
+    {% if messages %}
+      <div style="margin-bottom: 20px;">
+        {% for message in messages %}
+          <div style="padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 0.95rem;
+                      {% if message.tags == 'success' %}
+                        background-color: #e6ffed; color: #0f5132; border-left: 5px solid #198754;
+                      {% elif message.tags == 'error' %}
+                        background-color: #fde2e4; color: #842029; border-left: 5px solid #dc3545;
+                      {% elif message.tags == 'warning' %}
+                        background-color: #fff8e1; color: #664d03; border-left: 5px solid #ffc107;
+                      {% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <!-- ✅ Form -->
+    <form method="post" action="{% url 'add_admin' %}">
+      {% csrf_token %}
+
+      <div style="margin-bottom: 18px;">
+        <label for="id_department" style="font-weight: 600; display: block; margin-bottom: 6px;">Department:</label>
+        <select name="department" id="id_department" required
+                style="width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 8px; background: #f8f9fa; transition: 0.3s;">
+          <option value="">-- Select Department --</option>
+          {% for dept in departments %}
+            <option value="{{ dept.id }}">{{ dept.department_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div style="margin-bottom: 18px;">
+        <label for="id_name" style="font-weight: 600; display: block; margin-bottom: 6px;">Name:</label>
+        <input type="text" name="name" id="id_name" required
+               style="width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 8px; background: #f8f9fa; transition: 0.3s;">
+      </div>
+
+      <div style="margin-bottom: 25px;">
+        <label for="id_email" style="font-weight: 600; display: block; margin-bottom: 6px;">Email:</label>
+        <input type="email" name="email" id="id_email" required
+               style="width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 8px; background: #f8f9fa; transition: 0.3s;">
+      </div>
+
+      <div style="text-align: center;">
+        <button type="submit"
+                style="background: #0d5c7d; color: white; border: none; padding: 10px 35px; border-radius: 25px;
+                       font-weight: 600; letter-spacing: 0.5px; cursor: pointer; transition: all 0.3s ease;">
+          + Add Admin
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
+
+<!-- ✨ Interactive form input hover/focus effect -->
+<style>
+  select:focus, input:focus {
+    outline: none;
+    border-color: #0d5c7d;
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(13, 92, 125, 0.2);
+  }
+  button:hover {
+    background-color: #0a4962;
+    transform: translateY(-2px);
+  }
+</style>
 {% endblock %}

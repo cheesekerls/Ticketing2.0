@@ -1,3 +1,4 @@
+
 <form method="POST">
     {% csrf_token %}
     <input type="email" name="email" placeholder="Enter your email" required>
@@ -8,3 +9,179 @@
 {% if error %}
     <p style="color:red">{{ error }}</p>
 {% endif %}
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Login</button>
+</form>
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body, html {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(135deg, #e6f0fa, #ffffff);
+        }
+
+        .container {
+            display: flex;
+            height: 100%;
+            width: 100%;
+        }
+
+        /* LEFT SIDE - LOGO */
+        .logo-section {
+            flex: 1;
+            background-color: #0d4770;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .logo-section img {
+            width: 260px;
+            height: auto;
+            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.3));
+            transform: translateX(20px); /* move logo slightly to the right */
+        }
+
+        /* RIGHT SIDE - LOGIN FORM */
+        .login-box {
+            flex: 1;
+            background-color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: -5px 0 20px rgba(0,0,0,0.05);
+        }
+
+        .login-form {
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+            padding: 40px 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            background-color: #ffffff;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+
+        .login-form h2 {
+            font-size: 28px;
+            font-weight: 600;
+            color: #0d4770;
+            margin-bottom: 30px;
+        }
+
+        .login-form input {
+            width: 100%;
+            padding: 14px 15px;
+            margin: 12px 0;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .login-form input:focus {
+            border-color: #0d4770;
+            box-shadow: 0 0 8px rgba(13, 71, 112, 0.3);
+            outline: none;
+        }
+
+        .login-form button {
+            width: 100%;
+            padding: 14px;
+            margin-top: 15px;
+            border: none;
+            border-radius: 10px;
+            background-color: #0d4770;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .login-form button:hover {
+            background-color: #093858;
+            transform: translateY(-2px);
+        }
+
+        .login-form p {
+            color: red;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 992px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .logo-section, .login-box {
+                flex: none;
+                width: 100%;
+                height: 50vh;
+            }
+
+            .login-form {
+                width: 90%;
+                padding: 30px 20px;
+            }
+
+            .logo-section img {
+                transform: translateX(0); /* reset logo position for mobile */
+            }
+        }
+
+        @media (max-width: 576px) {
+            .login-form h2 {
+                font-size: 24px;
+            }
+
+            .login-form input, .login-form button {
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo-section">
+            <img src="{% static 'images/logo1.png' %}" alt="Bulacan Logo">
+        </div>
+
+        <div class="login-box">
+            <div class="login-form">
+                <h2>LOGIN</h2>
+                <form method="POST">
+                    {% csrf_token %}
+                    <input type="text" name="email" placeholder="Enter your email" required>
+                    <input type="password" name="password" placeholder="Enter your password" required>
+                    <button type="submit">LOGIN</button>
+                </form>
+
+                {% if error %}
+                    <p>{{ error }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

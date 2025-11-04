@@ -85,6 +85,210 @@
           <tr>
             <td>{{ t.queue_position }}</td>
             <td>{{ t.ticket_number }}</td>
+
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
+
+    body {
+      background-color: #f8fafc;
+      font-family: 'Poppins', sans-serif;
+      color: #2d3436;
+    }
+
+    .dashboard-container {
+      width: 95%;
+      max-width: 1400px;
+      margin: 40px auto;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
+      padding: 40px 50px;
+    }
+
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 40px;
+      border-bottom: 1px solid #e9ecef;
+      padding-bottom: 15px;
+    }
+
+    h2 {
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    .btn-logout {
+      background-color: #dc3545;
+      border: none;
+      color: #fff;
+      padding: 10px 22px;
+      border-radius: 8px;
+      transition: background 0.3s ease;
+    }
+
+    .btn-logout:hover {
+      background-color: #bb2d3b;
+    }
+
+    .ticket-card {
+      background-color: #fdfdfd;
+      border: 1px solid #eee;
+      border-radius: 12px;
+      padding: 25px 30px;
+      margin-bottom: 35px;
+    }
+
+    .btn-custom {
+      background-color: #198754;
+      border: none;
+      color: #fff;
+      font-weight: 500;
+      padding: 12px 28px;
+      border-radius: 10px;
+      transition: background 0.3s ease;
+    }
+
+    .btn-custom:hover {
+      background-color: #157347;
+    }
+
+    .badge {
+      font-size: 0.9rem;
+      font-weight: 500;
+      border-radius: 6px;
+      padding: 7px 12px;
+    }
+
+    .badge.bg-primary {
+      background-color: #0d6efd !important;
+    }
+
+    table {
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    thead {
+      background-color: #0d6efd;
+      color: #fff;
+    }
+
+    th {
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.9rem;
+    }
+
+    tbody tr:hover {
+      background-color: #f9f9f9;
+    }
+
+    .btn-warning, .btn-danger {
+      border: none;
+      color: #fff;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 0.9rem;
+      transition: background 0.3s ease;
+    }
+
+    .btn-warning {
+      background-color: #f0ad4e;
+    }
+
+    .btn-warning:hover {
+      background-color: #ec971f;
+    }
+
+    .btn-danger {
+      background-color: #dc3545;
+    }
+
+    .btn-danger:hover {
+      background-color: #bb2d3b;
+    }
+
+    .fade-in {
+      animation: fadeIn 0.6s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 992px) {
+      .dashboard-container {
+        width: 95%;
+        padding: 25px;
+      }
+      .header-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+      }
+      .btn-custom {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+<div class="dashboard-container fade-in">
+  <div class="header-bar">
+    <div>
+      <h2>Counter Dashboard</h2>
+      <p class="text-muted mb-0">Counter: <strong>{{ counter_number }}</strong></p>
+    </div>
+    <a href="{% url 'logout' %}" class="btn btn-logout">Logout</a>
+  </div>
+
+  <div class="mb-4">
+    <h6 class="fw-semibold mb-2">Assigned Services:</h6>
+    {% for s in assigned_services %}
+      <span class="badge bg-primary me-2">{{ s.service_name }}</span>
+    {% empty %}
+      <p class="text-muted">No assigned services found.</p>
+    {% endfor %}
+  </div>
+
+  <div class="ticket-card text-center">
+    <h5 class="fw-semibold mb-3">Now Serving</h5>
+    {% if current_ticket %}
+      <p class="fs-2 fw-bold text-success">{{ current_ticket.ticket_number }}</p>
+      <p>Service: <strong>{{ current_ticket.service.service_name }}</strong></p>
+    {% else %}
+      <p class="text-muted mb-0">No ticket is currently being served.</p>
+    {% endif %}
+  </div>
+
+  <form method="post" action="{% url 'call_next_ticket' %}" class="text-center mb-4">
+    {% csrf_token %}
+    <button class="btn btn-custom">Call Next Ticket</button>
+  </form>
+
+  <div class="ticket-card">
+    <h5 class="fw-semibold mb-3">Waiting / Skipped Tickets</h5>
+    <div class="table-responsive">
+      <table class="table align-middle table-bordered">
+        <thead>
+          <tr>
+            <th>Position</th>
+            <th>Ticket No.</th>
+            <th>Service</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in tickets %}
+          <tr>
+            <td>{{ t.queue_position }}</td>
+            <td class="fw-semibold">{{ t.ticket_number }}</td>
             <td>{{ t.service.service_name }}</td>
             <td>
               {% if t.status == "Skipped" %}
@@ -98,17 +302,25 @@
               <button type="button" class="btn btn-danger btn-sm cancel-ticket" data-ticket="{{ t.ticket_number }}">Cancel</button>
             </td>
           </tr>
+
         {% empty %}
           <tr><td colspan="5" class="text-center text-muted">No tickets in queue.</td></tr>
         {% endfor %}
       </tbody>
     </table>
+
+          {% empty %}
+          <tr><td colspan="5" class="text-center text-muted">No tickets in queue.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script>
-  // AJAX cancel ticket
+
   $(document).on('click', '.cancel-ticket', function() {
     const ticketNumber = $(this).data('ticket');
     if (confirm(`Cancel ticket ${ticketNumber}?`)) {
@@ -124,6 +336,5 @@
     }
   });
 </script>
-
 </body>
 </html>
