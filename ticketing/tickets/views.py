@@ -27,18 +27,20 @@ def print_ticket_to_pos(request, service_id=None):
                     'error': 'No service defined. Please create a Service first.'
                 })
 
-            # ✅ Get lane type (from HTML field named "ticket_type")
-            lane = request.POST.get('ticket_type', 'Regular')  # default if missing
-            print("Lane type received:", lane)
+            lane = request.POST.get('ticket_type', 'Regular')
+            today = timezone.now().date()
 
-            # ✅ Auto-generate ticket number
-            last_ticket = Ticket.objects.order_by('-ticket_id').first()
-            next_number = (last_ticket.ticket_id + 1) if last_ticket else 1
-            ticket_number = f"T-{next_number:04d}"
+            # ✅ Separate queue for Regular and Priority
+            last_ticket = Ticket.objects.filter(
+                service=service,
+                lane=lane,
+                created_at__date=today
+            ).order_by('-queue_position').first()
 
-            # ✅ Determine queue position
-            last_position_ticket = Ticket.objects.order_by('-queue_position').first()
-            next_position = (last_position_ticket.queue_position + 1) if last_position_ticket else 1
+            next_position = (last_ticket.queue_position + 1) if last_ticket else 1
+
+            # ✅ Ticket number with lane prefix (R or P)
+            ticket_number = f"{service.service_name[:3].upper()}-{lane[:1]}{next_position:03d}"
 
             # ✅ Create the ticket
             ticket = Ticket.objects.create(
@@ -55,7 +57,6 @@ def print_ticket_to_pos(request, service_id=None):
              Ticket No: {ticket.ticket_number}
              Service: {ticket.service.service_name}
              Lane: {ticket.lane}
-             Status: {ticket.status}
             """
 
             # ✅ QR Code

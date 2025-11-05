@@ -161,9 +161,12 @@
                     <button type="submit">LOGIN</button>
                 </form>
 
-                {% if error %}
-                    <p>{{ error }}</p>
-                {% endif %}
+                {% if messages %}
+  {% for message in messages %}
+    <p style="color:red;">{{ message }}</p>
+  {% endfor %}
+{% endif %}
+
             </div>
         </div>
     </div>

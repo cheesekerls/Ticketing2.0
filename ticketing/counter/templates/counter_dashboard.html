@@ -209,17 +209,22 @@
             <td>{{ t.queue_position }}</td>
             <td class="fw-semibold">{{ t.ticket_number }}</td>
             <td>{{ t.service.service_name }}</td>
-            <td>
-              {% if t.status == "Skipped" %}
-                <span class="badge bg-warning text-dark">{{ t.status }}</span>
-              {% else %}
-                <span class="badge bg-info text-dark">{{ t.status }}</span>
-              {% endif %}
-            </td>
-            <td>
-              <a href="{% url 'skip_ticket' t.ticket_number %}" class="btn btn-warning btn-sm">Skip</a>
-              <button type="button" class="btn btn-danger btn-sm cancel-ticket" data-ticket="{{ t.ticket_number }}">Cancel</button>
-            </td>
+      <td>{{ t.status }}</td> <!-- Status column -->
+
+<td> <!-- Action column -->
+  {% if t.status == "Skipped" %}
+    <form method="post" action="{% url 'back_to_queue' t.ticket_number %}" class="d-inline">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-success btn-sm">Back to Queue</button>
+    </form>
+  {% else %}
+    <a href="{% url 'skip_ticket' t.ticket_number %}" class="btn btn-warning btn-sm">Skip</a>
+  {% endif %}
+  
+  <button type="button" class="btn btn-danger btn-sm cancel-ticket" data-ticket="{{ t.ticket_number }}">Cancel</button>
+</td>
+
+
           </tr>
           {% empty %}
           <tr><td colspan="5" class="text-center text-muted">No tickets in queue.</td></tr>

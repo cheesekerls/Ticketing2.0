@@ -1,111 +1,33 @@
-{% extends "base_superadmin.html" %}
+{% extends "superadmin_dashboard.html" %}
 
 {% block title %}Add Department{% endblock %}
-
 {% block content %}
-<<<<<<< Updated upstream
-<div style="display: flex; justify-content: center; margin-top: 50px;">
-    <div style="background: #f0f0f0; padding: 30px; border-radius: 10px; width: 400px;">
-
-        <form method="post" id="deptForm">
-            {% csrf_token %}
-
-            <label for="id_department_name">Department name :</label>
-            <input type="text" name="department_name" id="id_department_name" 
-                   class="form-control" style="width: 100%; margin-bottom: 15px; padding: 8px;" required>
-
-            <label for="id_prefix">Prefix</label>
-            <input type="text" name="prefix" id="id_prefix" 
-                   class="form-control" style="width: 100%; margin-bottom: 15px; padding: 8px;" required>
-
-            <div style="text-align: center;">
-                <button type="submit" 
-                        style="background: #0d5c7d; color: white; border: none; padding: 10px 30px; border-radius: 5px; cursor: pointer;">
-                    ADD
-                </button>
-            </div>
-        </form>
-
+<div class="container mt-4">
+  <div class="card shadow-sm p-4" style="max-width: 500px; margin: auto;">
+      <h4 class="mb-4 text-center text-primary">Add Department</h4>
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+        {{ message }}
     </div>
-=======
-<div class="container d-flex justify-content-center align-items-center" style="min-height: 80vh;">
-  <div class="card shadow-lg border-0 rounded-4 p-5" style="width: 420px; background-color: #ffffff;">
-    <h3 class="text-center mb-4 fw-bold text-dark">Add New Department</h3>
+  {% endfor %}
+{% endif %}
+      <form method="post" id="deptForm">
+          {% csrf_token %}
+          <div class="mb-3">
+              <label for="id_department_name" class="form-label">Department Name</label>
+              <input type="text" name="department_name" id="id_department_name" class="form-control" required>
+          </div>
 
-    <!-- ✅ Display messages -->
-    {% if messages %}
-      {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} text-center rounded-3 py-2 mb-3">
-          {{ message }}
-        </div>
-      {% endfor %}
-    {% endif %}
+          <div class="mb-3">
+              <label for="id_prefix" class="form-label">Prefix</label>
+              <input type="text" name="prefix" id="id_prefix" class="form-control" required>
+          </div>
 
-    <!-- ✅ Add Department Form -->
-    <form method="post" action="{% url 'add_department' %}">
-      {% csrf_token %}
-
-      <div class="mb-3">
-        <label class="form-label fw-semibold">Department Name</label>
-        <input type="text" name="department_name" class="form-control" placeholder="e.g. Human Resources" required>
-      </div>
-
-      <div class="mb-4">
-        <label class="form-label fw-semibold">Prefix</label>
-        <input type="text" name="prefix" class="form-control" placeholder="e.g. HR" required>
-      </div>
-
-      <div class="text-center">
-        <button type="submit" class="btn btn-dark rounded-pill px-4 py-2 shadow-sm">
-          Add Department
-        </button>
-      </div>
-    </form>
+          <div class="text-center">
+              <button type="submit" class="btn btn-primary px-4">Add</button>
+          </div>
+      </form>
   </div>
->>>>>>> Stashed changes
 </div>
-
-<style>
-/* 🌙 Modern Luxury Form Design */
-.card {
-  transition: all 0.3s ease;
-}
-.card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-}
-form label {
-  color: #1e1e1e;
-  margin-bottom: 6px;
-}
-form select,
-form input[type="text"],
-form input[type="email"] {
-  width: 100%;
-  padding: 10px 14px;
-  border: 1px solid #ced4da;
-  border-radius: 10px;
-  background-color: #f9f9f9;
-  transition: all 0.3s ease;
-}
-form select:focus,
-form input:focus {
-  outline: none;
-  background-color: #ffffff;
-  border-color: #1e3a5f;
-  box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.15);
-}
-.btn-dark {
-  background-color: #1e3a5f;
-  border: none;
-  transition: all 0.3s ease;
-}
-.btn-dark:hover {
-  background-color: #162d4a;
-  transform: translateY(-2px);
-}
-.alert {
-  font-size: 0.9rem;
-}
-</style>
 {% endblock %}
