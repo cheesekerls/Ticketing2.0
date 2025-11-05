@@ -1,4 +1,5 @@
 
+<<<<<<< HEAD
 <form method="POST">
     {% csrf_token %}
     <input type="email" name="email" placeholder="Enter your email" required>
@@ -15,6 +16,8 @@
   <button type="submit">Login</button>
 </form>
 
+=======
+>>>>>>> createticket
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -177,11 +180,18 @@
                     <button type="submit">LOGIN</button>
                 </form>
 
-                {% if error %}
-                    <p>{{ error }}</p>
-                {% endif %}
+                {% if messages %}
+  {% for message in messages %}
+    <p style="color:red;">{{ message }}</p>
+  {% endfor %}
+{% endif %}
+
             </div>
         </div>
     </div>
 </body>
+<<<<<<< HEAD
 </html>
+=======
+</html>
+>>>>>>> createticket

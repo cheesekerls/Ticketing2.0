@@ -27,4 +27,7 @@ class Service(models.Model):
 
     def __str__(self):
         # ✅ Use department_name instead of name
+
         return f"{self.service_name}"
+
+       

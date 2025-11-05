@@ -9,13 +9,12 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('departments', '0001_initial'),
-        ('services', '0001_initial'),
         ('tickets', '0001_initial'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
-        # ✅ COUNTER MODEL (fixed duplicate fields)
+        # ✅ COUNTER MODEL
         migrations.CreateModel(
             name='Counter',
             fields=[
@@ -127,12 +126,12 @@ class Migration(migrations.Migration):
             ],
         ),
 
-        # ✅ CONSTRAINT FIXED (correct Q syntax)
+        # ✅ UNIQUE CONSTRAINT ON EMPLOYEE
         migrations.AddConstraint(
             model_name='employee',
             constraint=models.UniqueConstraint(
+                fields=['department'],
                 condition=models.Q(position='Admin'),
-                fields=('department',),
                 name='unique_admin_per_department',
             ),
         ),

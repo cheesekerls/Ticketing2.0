@@ -15,6 +15,7 @@
 </head>
 <body>
 
+
     <table border="1" width="100%" style="border-collapse: collapse;">
         <tr style="background: #0a3d62; color: white;">
             <th>ID</th>
@@ -115,8 +116,8 @@
           </tbody>
         </table>
       </div>
+
     </div>
-  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -154,36 +155,37 @@
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+// 🧠 Show edit modal
 function openEditModal(id, name, prefix) {
     const modal = document.getElementById('editModal');
     modal.style.display = 'flex';
-    document.getElementById('editModal').style.display = 'flex';
     document.getElementById('edit_id').value = id;
     document.getElementById('edit_name').value = name;
     document.getElementById('edit_prefix').value = prefix;
-  const modal = new bootstrap.Modal(document.getElementById('editModal'));
-  document.getElementById('edit_id').value = id;
-  document.getElementById('edit_name').value = name;
-  document.getElementById('edit_prefix').value = prefix;
-  modal.show();
-
 }
 
+// 🧠 Close modal
+function closeEditModal() {
+    document.getElementById('editModal').style.display = 'none';
+}
+
+// 🧠 Delete confirmation
 function confirmDelete(id) {
-  Swal.fire({
-    title: 'Are you sure?',
-    text: "You won’t be able to undo this.",
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#000',
-    cancelButtonColor: '#6c757d',
-    confirmButtonText: 'Yes, delete it'
-  }).then((result) => {
-    if (result.isConfirmed) {
-      window.location.href = '/departments/delete/' + id + '/';
-    }
-  });
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "This action cannot be undone!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = '/departments/delete/' + id + '/';
+        }
+    });
 }
 </script>
 </body>
@@ -220,4 +222,5 @@ function confirmDelete(id) {
 }
 </style>
 
+{% endblock %}
 {% endblock %}

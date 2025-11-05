@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {% load static %}
 <!DOCTYPE html>
 <html>
@@ -119,3 +120,129 @@
   </table>
 </body>
 </html>
+=======
+{% extends "admin_dashboard.html" %}
+
+{% block title %}Counters - {{ department_name }}{% endblock %}
+
+{% block content %}
+<div class="content-area" style="max-width:1000px; margin:0 auto;">
+  <!-- Card Container -->
+  <div style="background:#ffffff; padding:25px 30px; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.08);">
+    
+    <h2 style="margin-bottom:20px; color:#1e3a5f; font-weight:700;">
+      {{ department_name }} Department - Counters
+    </h2>
+
+    <!-- Add Counter -->
+    <div style="margin-bottom:20px; text-align:right;">
+      <a href="{% url 'add_counter' %}" 
+         style="background:#1e3a5f; color:white; padding:10px 20px; border-radius:8px; text-decoration:none; font-weight:600;">
+         + Add Counter
+      </a>
+    </div>
+
+    <!-- Counters Table -->
+    <div style="overflow-x:auto;">
+      <table style="width:100%; border-collapse:collapse; min-width:700px;">
+        <thead>
+          <tr style="background:#1e3a5f; color:white; text-align:left;">
+            <th style="padding:10px 12px;">Email</th>
+            <th style="padding:10px 12px;">Counter Number</th>
+            <th style="padding:10px 12px;">Services</th>
+            <th style="padding:10px 12px; text-align:center;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for counter in counters %}
+          <tr style="border-bottom:1px solid #ddd;">
+            <td style="padding:10px 12px;">{{ counter.email }}</td>
+            <td style="padding:10px 12px;">{{ counter.counter_number }}</td>
+            <td style="padding:10px 12px;">
+              {% for s in counter.services.all %}
+                {{ s.service_name }}{% if not forloop.last %}, {% endif %}
+              {% empty %}
+                <span style="color:#888;">No assigned services</span>
+              {% endfor %}
+            </td>
+            <td style="padding:10px 12px; text-align:center;">
+              <button 
+                style="background:#1e3a5f; color:white; border:none; padding:6px 12px; border-radius:6px; margin-right:5px; cursor:pointer; font-size:0.9rem;"
+                data-bs-toggle="modal" data-bs-target="#editModal{{ counter.counter_id }}">
+                Edit
+              </button>
+              <button 
+                style="background:#dc3545; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.9rem;"
+                data-bs-toggle="modal" data-bs-target="#deleteModal{{ counter.counter_id }}">
+                Delete
+              </button>
+            </td>
+          </tr>
+
+          <!-- 🟦 Edit Modal -->
+          <div class="modal fade" id="editModal{{ counter.counter_id }}" tabindex="-1" aria-labelledby="editModalLabel{{ counter.counter_id }}" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <form method="POST" action="{% url 'edit_counter' counter.counter_id %}">
+                  {% csrf_token %}
+                  <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="editModalLabel{{ counter.counter_id }}">Edit Counter</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body">
+                    <!-- Email (readonly) -->
+                    <div class="mb-3">
+                      <label class="form-label">Email</label>
+                      <input type="email" name="email" class="form-control" value="{{ counter.email }}" readonly>
+                      <small class="text-muted">Email cannot be changed.</small>
+                    </div>
+
+                    <!-- Counter Number -->
+                    <div class="mb-3">
+                      <label class="form-label">Counter Number</label>
+                      <input type="text" name="counter_number" class="form-control" value="{{ counter.counter_number }}" required>
+                    </div>
+
+                    <!-- Services (checkboxes) -->
+                    <div class="mb-3">
+                      <label class="form-label">Services</label>
+                      <div class="border rounded p-2" style="max-height:200px; overflow-y:auto;">
+                        {% for s in all_services %}
+                        <div class="form-check">
+                          <input 
+                            class="form-check-input" 
+                            type="checkbox" 
+                            name="services" 
+                            value="{{ s.service_id }}" 
+                            id="service{{ counter.counter_id }}_{{ s.service_id }}"
+                            {% if s in counter.services.all %}checked{% endif %}>
+                          <label class="form-check-label" for="service{{ counter.counter_id }}_{{ s.service_id }}">
+                            {{ s.service_name }}
+                          </label>
+                        </div>
+                        {% endfor %}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          {% empty %}
+          <tr>
+            <td colspan="4" style="text-align:center; padding:15px;">No counters found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+>>>>>>> createticket

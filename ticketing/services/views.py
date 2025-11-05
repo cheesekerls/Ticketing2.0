@@ -90,3 +90,5 @@ def delete_service(request, service_id):
 
     service.delete()
     return redirect('service_list')
+
+    

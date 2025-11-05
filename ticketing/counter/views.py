@@ -8,6 +8,8 @@ from tickets.models import Ticket
 from .models import Counter
 from accounts.decorators import role_required, department_admin_required
 from django.contrib import messages
+from django.views.decorators.csrf import csrf_exempt
+
 
 # ---------------------- ADMIN VIEWS ----------------------
 
@@ -161,6 +163,7 @@ def edit_counter(request, counter_id):
         counter.counter_number = request.POST.get("counter_number")
 
         # ✅ Get all selected service IDs from form
+        counter.counter_number = request.POST.get("counter_number")
         service_ids = request.POST.getlist("services")
 
         # ✅ Save Counter first (for M2M)
@@ -180,3 +183,11 @@ def delete_counter(request, counter_id):
     if request.method == "POST":
         counter.delete()
         return redirect("counter_list")
+
+
+def back_to_queue(request, ticket_number):
+    ticket = get_object_or_404(Ticket, ticket_number=ticket_number)
+    ticket.status = "Waiting"
+    ticket.save()
+    return redirect('queue_dashboard')
+
