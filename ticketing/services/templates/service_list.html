@@ -1,156 +1,204 @@
 {% extends "admin_dashboard.html" %}
-
 {% block title %}Services{% endblock %}
 
 {% block content %}
 <div class="content-area" style="max-width:1000px; margin:0 auto;">
+  <div style="background:#ffffff; padding:25px 30px; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.08);">
+    <h2 style="margin-bottom:20px; color:#1e3a5f; font-weight:700;">Services</h2>
 
-    <!-- Card container -->
-    <div style="background:#ffffff; padding:25px 30px; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.08);">
+    <!-- Toolbar -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
+      <a href="{% url 'add_service' %}"
+         style="background:#1e3a5f; color:white; padding:10px 20px; border-radius:8px; text-decoration:none; font-weight:600;">
+         + Add Service
+      </a>
 
-        <h2 style="margin-bottom:20px; color:#1e3a5f; font-weight:700;">Services</h2>
-
-        <!-- Desktop Table -->
-        <div class="desktop-table" style="overflow-x:auto;">
-            <table style="width:100%; border-collapse:collapse; min-width:600px;">
-                <thead>
-                    <tr style="background:#1e3a5f; color:white; text-align:left;">
-                        <th style="padding:10px 12px;">Service ID</th>
-                        <th style="padding:10px 12px;">Service Name</th>
-                        <th style="padding:10px 12px;">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for service in services %}
-                    <tr style="border-bottom:1px solid #ddd;">
-                        <td style="padding:10px 12px;">{{ service.service_id }}</td>
-                        <td style="padding:10px 12px;">{{ service.service_name }}</td>
-                        <td style="padding:10px 12px; white-space:nowrap;">
-                            <button 
-                                style="background:#1e3a5f; color:white; border:none; padding:6px 12px; border-radius:6px; margin-right:5px; cursor:pointer; font-size:0.9rem;"
-                                onclick="openEditModal('{{ service.id }}', '{{ service.service_name }}')">
-                                Edit
-                            </button>
-                            <button 
-                                style="background:#dc3545; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.9rem;"
-                                onclick="confirmDelete('{{ service.id }}')">
-                                Delete
-                            </button>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="3" style="text-align:center; padding:15px;">No services found.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Mobile Cards -->
-        <div class="mobile-cards" style="display:none; gap:15px; flex-direction:column;">
-            {% for service in services %}
-            <div style="background:#f8f9fa; padding:15px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.05);">
-                <p><strong>ID:</strong> {{ service.service_id }}</p>
-                <p><strong>Name:</strong> {{ service.service_name }}</p>
-                <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                    <button 
-                        style="flex:1; background:#1e3a5f; color:white; border:none; padding:8px 0; border-radius:6px; font-weight:500; cursor:pointer;"
-                        onclick="openEditModal('{{ service.id }}', '{{ service.service_name }}')">
-                        Edit
-                    </button>
-                    <button 
-                        style="flex:1; background:#dc3545; color:white; border:none; padding:8px 0; border-radius:6px; font-weight:500; cursor:pointer;"
-                        onclick="confirmDelete('{{ service.id }}')">
-                        Delete
-                    </button>
-                </div>
-            </div>
-            {% empty %}
-            <p style="text-align:center; padding:10px;">No services found.</p>
-            {% endfor %}
-        </div>
-
-        <!-- Add Service -->
-        <div style="margin-top:25px; text-align:right;">
-            <a href="{% url 'add_service' %}" 
-               style="background: #1e3a5f; color: white; padding:10px 20px; border-radius:8px; text-decoration:none; font-weight:600;">
-               + Add Service
-            </a>
-        </div>
-
+      <button id="delete-selected"
+              style="background:#dc3545; color:white; padding:10px 20px; border:none; border-radius:8px; font-weight:600; cursor:pointer;"
+              disabled>
+        🗑 Delete Selected
+      </button>
     </div>
+
+    <!-- Service Table -->
+    <div class="desktop-table" style="overflow-x:auto;">
+      <table style="width:100%; border-collapse:collapse; min-width:700px;">
+        <thead>
+          <tr style="background:#1e3a5f; color:white; text-align:left;">
+            <th style="padding:10px 12px; text-align:center; width:50px;">
+              <input type="checkbox" id="select-all">
+            </th>
+            <th style="padding:10px 12px;">Service ID</th>
+            <th style="padding:10px 12px;">Service Name</th>
+            <th style="padding:10px 12px;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for service in services %}
+          <tr style="border-bottom:1px solid #ddd;">
+            <td style="text-align:center;">
+              <input type="checkbox" class="service-checkbox" value="{{ service.id }}">
+            </td>
+            <td style="padding:10px 12px;">{{ service.service_id }}</td>
+            <td style="padding:10px 12px;">{{ service.service_name }}</td>
+            <td style="padding:10px 12px; white-space:nowrap;">
+              <button
+                  style="background:#1e3a5f; color:white; border:none; padding:6px 12px; border-radius:6px; margin-right:5px; cursor:pointer; font-size:0.9rem;"
+                  onclick="openEditModal('{{ service.id }}', '{{ service.service_name }}')">
+                Edit
+              </button>
+              <button
+                  style="background:#dc3545; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.9rem;"
+                  onclick="confirmDelete('{{ service.id }}')">
+                Delete
+              </button>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" style="text-align:center; padding:15px;">No services found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <!-- Edit Modal -->
-<div id="editModal" 
+<div id="editModal"
      style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
      background:rgba(0,0,0,0.6); justify-content:center; align-items:center; z-index:999; padding:10px;">
-    <div style="background:white; padding:25px 30px; border-radius:12px; width:100%; max-width:400px; box-shadow:0 4px 15px rgba(0,0,0,0.2);">
-        <h3 style="margin-bottom:20px; color:#1e3a5f;">Edit Service</h3>
+  <div style="background:white; padding:25px 30px; border-radius:12px; width:100%; max-width:400px; box-shadow:0 4px 15px rgba(0,0,0,0.2);">
+    <h3 style="margin-bottom:20px; color:#1e3a5f;">Edit Service</h3>
 
-        <form id="editForm" method="post" action="">
-            {% csrf_token %}
-            <input type="hidden" id="edit_id" name="service_id" style="display:none;">
-            <div style="display:flex; flex-direction:column; gap:12px;">
-                <label for="edit_name" style="font-weight:600; color:#333;">Service Name</label>
-                <input type="text" id="edit_name" name="service_name" required
-                       style="padding:10px; border:1px solid #ccc; border-radius:8px; font-size:14px; outline:none; width:100%;">
-            </div>
-            <div style="margin-top:20px; display:flex; gap:12px; justify-content:flex-end; flex-wrap:wrap;">
-                <button type="submit" 
-                        style="background:#1e3a5f; color:white; border:none; padding:10px 18px; border-radius:8px; font-weight:600; cursor:pointer;">
-                    Save
-                </button>
-                <button type="button" onclick="closeEditModal()" 
-                        style="background:#ccc; color:black; border:none; padding:10px 18px; border-radius:8px; font-weight:600; cursor:pointer;">
-                    Cancel
-                </button>
-            </div>
-        </form>
-    </div>
+    <form id="editForm" method="post" action="">
+      {% csrf_token %}
+      <input type="hidden" id="edit_id" name="service_id" style="display:none;">
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <label for="edit_name" style="font-weight:600; color:#333;">Service Name</label>
+        <input type="text" id="edit_name" name="service_name" required
+               style="padding:10px; border:1px solid #ccc; border-radius:8px; font-size:14px; outline:none; width:100%;">
+      </div>
+      <div style="margin-top:20px; display:flex; gap:12px; justify-content:flex-end; flex-wrap:wrap;">
+        <button type="submit"
+                style="background:#1e3a5f; color:white; border:none; padding:10px 18px; border-radius:8px; font-weight:600; cursor:pointer;">
+          Save
+        </button>
+        <button type="button" onclick="closeEditModal()"
+                style="background:#ccc; color:black; border:none; padding:10px 18px; border-radius:8px; font-weight:600; cursor:pointer;">
+          Cancel
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
 
+<!-- SweetAlert + JS -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+const selectAll = document.getElementById('select-all');
+const deleteBtn = document.getElementById('delete-selected');
+const checkboxes = document.querySelectorAll('.service-checkbox');
+
+// Toggle select all
+selectAll.addEventListener('change', () => {
+  checkboxes.forEach(cb => cb.checked = selectAll.checked);
+  toggleDeleteButton();
+});
+
+checkboxes.forEach(cb => cb.addEventListener('change', toggleDeleteButton));
+
+function toggleDeleteButton() {
+  const anyChecked = [...checkboxes].some(cb => cb.checked);
+  deleteBtn.disabled = !anyChecked;
+}
+
+// Bulk delete
+deleteBtn.addEventListener('click', () => {
+  const ids = [...checkboxes].filter(cb => cb.checked).map(cb => cb.value);
+  if (ids.length === 0) return;
+
+  Swal.fire({
+    title: 'Confirm Deletion',
+    text: `Are you sure you want to delete ${ids.length} service(s)?`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, delete',
+    confirmButtonColor: '#dc3545',
+  }).then(result => {
+    if (result.isConfirmed) {
+      fetch("{% url 'delete_multiple_services' %}", {
+        method: "POST",
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+        body: JSON.stringify({ids: ids})
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Deleted!',
+            text: `${data.deleted} service(s) removed.`,
+            timer: 1500,
+            showConfirmButton: false
+          }).then(() => window.location.reload());
+        }
+      });
+    }
+  });
+});
+
+// Single delete confirmation
+function confirmDelete(id) {
+  Swal.fire({
+    title: 'Are you sure?',
+    text: "This will permanently delete the service.",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#dc3545',
+    cancelButtonColor: '#3085d6',
+    confirmButtonText: 'Yes, delete it'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      window.location.href = `/services/${id}/delete/`;
+    }
+  });
+}
+
+// Edit Modal functions
 function openEditModal(id, name) {
-    const modal = document.getElementById('editModal');
-    modal.style.display = 'flex';
-    document.getElementById('edit_id').value = id;
-    document.getElementById('edit_name').value = name;
-    document.getElementById('editForm').action = `/services/${id}/edit/`;
+  const modal = document.getElementById('editModal');
+  modal.style.display = 'flex';
+  document.getElementById('edit_id').value = id;
+  document.getElementById('edit_name').value = name;
+  document.getElementById('editForm').action = `/services/${id}/edit/`;
 }
 
 function closeEditModal() {
-    document.getElementById('editModal').style.display = 'none';
+  document.getElementById('editModal').style.display = 'none';
 }
-
-function confirmDelete(id) {
-    Swal.fire({
-        title: 'Are you sure?',
-        text: "This action cannot be undone!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Yes, delete it!'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            window.location.href = `/services/${id}/delete/`;
-        }
-    });
-}
-
-// ✅ Toggle table/cards based on screen size
-function toggleResponsive() {
-    const width = window.innerWidth;
-    document.querySelector('.desktop-table').style.display = width > 768 ? 'block' : 'none';
-    document.querySelector('.mobile-cards').style.display = width <= 768 ? 'flex' : 'none';
-}
-
-// Initialize
-toggleResponsive();
-window.addEventListener('resize', toggleResponsive);
 </script>
 
+<style>
+/* Professional responsive design */
+@media (max-width: 768px) {
+  table, thead, tbody, th, td, tr { display: block; }
+  thead tr { display: none; }
+  tbody tr {
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+  }
+  tbody td {
+    padding: 8px 10px;
+    display: flex;
+    justify-content: space-between;
+  }
+  tbody td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #1e3a5f;
+  }
+}
+</style>
 {% endblock %}
