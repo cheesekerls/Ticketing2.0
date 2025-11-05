@@ -6,6 +6,16 @@
 <div class="content-area">
     <h2 style="margin-bottom: 15px;">Departments</h2>
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+
     <table border="1" width="100%" style="border-collapse: collapse;">
         <tr style="background: #0a3d62; color: white;">
             <th>ID</th>
@@ -61,8 +71,89 @@
             <button type="button" onclick="closeEditModal()" 
                     style="background:#ccc; color:black; border:none; padding:8px 15px; border-radius:5px;">Cancel</button>
         </form>
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold text-dark mb-0">Departments</h2>
+    <a href="{% url 'add_department' %}" class="btn btn-dark rounded-pill px-4 shadow-sm">
+      + Add Department
+    </a>
+  </div>
+
+  <div class="card border-0 shadow-sm rounded-4">
+    <div class="card-body p-4">
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="bg-dark text-white rounded-top">
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Prefix</th>
+              <th class="text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for dept in departments %}
+            <tr class="table-row-hover">
+              <td class="fw-semibold">{{ dept.department_id }}</td>
+              <td>{{ dept.department_name }}</td>
+              <td>{{ dept.prefix }}</td>
+              <td class="text-center">
+                <button class="btn btn-sm btn-outline-dark rounded-pill me-2 px-3"
+                        onclick="openEditModal('{{ dept.department_id }}', '{{ dept.department_name }}', '{{ dept.prefix }}')">
+                  Edit
+                </button>
+                <button class="btn btn-sm btn-outline-danger rounded-pill px-3"
+                        onclick="confirmDelete('{{ dept.department_id }}')">
+                  Delete
+                </button>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" class="text-center text-muted py-4">No departments found.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- ✨ Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow rounded-4">
+      <div class="modal-header border-0 bg-dark text-white rounded-top-4">
+        <h5 class="modal-title">Edit Department</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="editForm" method="post" action="{% url 'update_department' %}">
+        {% csrf_token %}
+        <div class="modal-body px-4 py-3">
+          <input type="hidden" id="edit_id" name="department_id">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Name</label>
+            <input type="text" id="edit_name" name="department_name" class="form-control form-control-lg rounded-3" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Prefix</label>
+            <input type="text" id="edit_prefix" name="prefix" class="form-control form-control-lg rounded-3" required>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pb-4">
+          <button type="submit" class="btn btn-dark rounded-pill px-4">Save</button>
+          <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
@@ -97,4 +188,39 @@ function confirmDelete(id) {
     });
 }
 </script>
+</body>
+</html>
+
+<style>
+/* 🌙 Elegant Department Styling */
+.table thead th {
+  border: none;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+.table tbody td {
+  vertical-align: middle;
+  color: #333;
+}
+.table-row-hover:hover {
+  background-color: #f8f9fa !important;
+  transition: all 0.3s ease;
+}
+.btn {
+  transition: all 0.3s ease;
+}
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.modal-content {
+  animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+</style>
+
+{% endblock %}
 {% endblock %}

@@ -116,6 +116,7 @@ def delete_service(request, service_id):
         return HttpResponseForbidden("You don't have permission to delete this service.")
 
     service.delete()
+<<<<<<< HEAD
 
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return JsonResponse({'success': True})
@@ -166,3 +167,8 @@ def check_service_duplicate(request):
     ).exists()
 
     return JsonResponse({'exists': exists})
+=======
+    return redirect('service_list')
+
+    
+>>>>>>> 7f3ae303ec1a32272dd33bb3630375691e77c039

@@ -80,6 +80,11 @@ def print_ticket_to_pos(request, service_id=None):
 
             next_position = (last_ticket.queue_position + 1) if last_ticket else 1
 
+
+            # ✅ Ticket number with lane prefix (R or P)
+            ticket_number = f"{service.service_name[:3].upper()}-{lane[:1]}{next_position:03d}"
+
+
             # ✅ Ticket number with lane prefix (R or P)
             ticket_number = f"{service.service_name[:3].upper()}-{lane[:1]}{next_position:03d}"
 
@@ -96,6 +101,16 @@ def print_ticket_to_pos(request, service_id=None):
 
             # Generate QR code
             qr = qrcode.make(ticket.ticket_number)
+
+            # ✅ Ticket text
+            ticket_text = f"""
+             Ticket No: {ticket.ticket_number}
+             Service: {ticket.service.service_name}
+             Lane: {ticket.lane}
+            """
+
+            # ✅ QR Code
+            qr = qrcode.make(f"{ticket.ticket_number}")
             qr_io = BytesIO()
             qr.save(qr_io, format='PNG')
             ticket_qr = base64.b64encode(qr_io.getvalue()).decode()

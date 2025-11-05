@@ -144,6 +144,21 @@
   </div>
 
   <script>
+
+    // Poll every 10 seconds to update ticket status
+function pollTicketStatus() {
+    const ticketNumber = "{{ ticket.ticket_number }}";
+    fetch(`/user/ticket/${ticketNumber}/ajax/`)
+        .then(res => res.json())
+        .then(data => {
+            updateTicketStatus(data.status, data.counter, data.people_ahead_count);
+        })
+        .catch(err => console.error("Failed to update ticket:", err));
+}
+
+// Start polling
+setInterval(pollTicketStatus, 10000); // every 10 seconds
+
   // Cancel ticket function
   function cancelTicket(url) {
     if (!confirm("Are you sure you want to cancel your ticket?")) return;
