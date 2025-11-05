@@ -14,7 +14,7 @@ urlpatterns = [
     path('add_admin/', views.add_admin, name='add_admin'),  
     path('set-password/<token>/', views.set_password, name='set_password'),  # ✅ correct
     path('forbidden/', views.forbidden_view, name='forbidden'),
-    path('reports/', views.reports, name='reports'),
+    path('reports/', views.report_dashboard, name='report_dashboard'),
     path('change-password/', views.admin_change_password, name='change_password'),
 
 

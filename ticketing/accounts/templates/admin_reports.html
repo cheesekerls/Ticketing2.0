@@ -1,0 +1,86 @@
+{% extends "admin_dashboard.html" %}
+{% block title %}Reports Dashboard{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:1200px; margin:auto;">
+  <h2 style="margin-bottom:20px; color:#0d47a1;">Ticket Reports Overview</h2>
+
+  <!-- Summary Cards -->
+  <div class="row" style="display:flex; gap:15px; flex-wrap:wrap; justify-content:space-between;">
+    <div class="card" style="flex:1; min-width:200px; background:#1565c0; color:white; padding:20px; border-radius:12px;">
+      <h4>Today</h4>
+      <h2>{{ today_tickets }}</h2>
+    </div>
+    <div class="card" style="flex:1; min-width:200px; background:#1976d2; color:white; padding:20px; border-radius:12px;">
+      <h4>This Month</h4>
+      <h2>{{ monthly_tickets }}</h2>
+    </div>
+    <div class="card" style="flex:1; min-width:200px; background:#1e88e5; color:white; padding:20px; border-radius:12px;">
+      <h4>This Year</h4>
+      <h2>{{ yearly_tickets }}</h2>
+    </div>
+    <div class="card" style="flex:1; min-width:200px; background:#2196f3; color:white; padding:20px; border-radius:12px;">
+      <h4>Total Tickets</h4>
+      <h2>{{ total_tickets }}</h2>
+    </div>
+  </div>
+
+  <!-- Chart Section -->
+  <div style="background:white; border-radius:12px; margin-top:30px; padding:25px; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
+    <h3 style="margin-bottom:15px;">Monthly Ticket Analytics</h3>
+    <canvas id="monthlyChart"></canvas>
+  </div>
+
+  <!-- Service Summary -->
+  <div style="background:white; border-radius:12px; margin-top:30px; padding:25px; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
+    <h3 style="margin-bottom:15px;">Tickets per Service</h3>
+    <table style="width:100%; border-collapse:collapse;">
+      <thead>
+        <tr style="background:#f4f6f8;">
+          <th style="padding:10px; text-align:left;">Service</th>
+          <th style="padding:10px; text-align:left;">Tickets</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in service_summary %}
+        <tr>
+          <td style="padding:10px;">{{ s.service__service_name }}</td>
+          <td style="padding:10px;">{{ s.total }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="2">No data available</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const ctx = document.getElementById('monthlyChart').getContext('2d');
+const chartData = {
+  labels: [{% for m in monthly_data %}'Month {{ m.created_at__month }}',{% endfor %}],
+  datasets: [{
+    label: 'Tickets per Month',
+    data: [{% for m in monthly_data %}{{ m.total }},{% endfor %}],
+    backgroundColor: 'rgba(25,118,210,0.7)',
+    borderColor: '#1565c0',
+    borderWidth: 2,
+    fill: true,
+    tension: 0.4
+  }]
+};
+
+new Chart(ctx, {
+  type: 'line',
+  data: chartData,
+  options: {
+    responsive: true,
+    scales: {
+      y: { beginAtZero: true }
+    }
+  }
+});
+</script>
+{% endblock %}

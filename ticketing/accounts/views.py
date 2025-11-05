@@ -35,6 +35,14 @@ from .forms import ChangePasswordForm
 from accounts.models import Employee  # or your Admin user model
 from services.models import Service
 from counter.models import Counter
+from tickets.models import Ticket
+from datetime import date
+import json
+from django.db.models import Count
+from django.http import HttpResponse
+import csv
+from django.utils.timezone import now
+
 
 User = get_user_model()
 
@@ -308,3 +316,43 @@ def counter_list(request):
         'counters': counters
     }
     return render(request, 'counter_list.html', context)
+
+
+def report_dashboard(request):
+    today = now().date()
+    month = today.month
+    year = today.year
+
+    # ✅ Count tickets (daily, monthly, yearly)
+    today_tickets = Ticket.objects.filter(created_at__date=today).count()
+    monthly_tickets = Ticket.objects.filter(created_at__year=year, created_at__month=month).count()
+    yearly_tickets = Ticket.objects.filter(created_at__year=year).count()
+    total_tickets = Ticket.objects.count()
+
+    # ✅ Ticket count per service
+    service_summary = (
+        Ticket.objects.values('service__service_name')
+        .annotate(total=Count('ticket_id'))
+        .order_by('-total')
+    )
+
+    # ✅ Ticket count per department (optional)
+   
+    # ✅ Data for chart
+    monthly_data = (
+        Ticket.objects.filter(created_at__year=year)
+        .values('created_at__month')
+        .annotate(total=Count('ticket_id'))
+        .order_by('created_at__month')
+    )
+
+    context = {
+        'today_tickets': today_tickets,
+        'monthly_tickets': monthly_tickets,
+        'yearly_tickets': yearly_tickets,
+        'total_tickets': total_tickets,
+        'service_summary': service_summary,
+        'monthly_data': monthly_data,
+    }
+
+    return render(request, 'admin_reports.html', context)
