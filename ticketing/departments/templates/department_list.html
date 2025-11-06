@@ -3,98 +3,143 @@
 {% block title %}Departments{% endblock %}
 
 {% block content %}
-<div class="content-area">
-    <h2 style="margin-bottom: 15px;">Departments</h2>
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold text-dark mb-0">Departments</h2>
+    <a href="{% url 'add_department' %}" class="btn btn-dark rounded-pill px-4 shadow-sm">
+      + Add Department
+    </a>
+  </div>
 
-    <table border="1" width="100%" style="border-collapse: collapse;">
-        <tr style="background: #0a3d62; color: white;">
-            <th>ID</th>
-            <th>Name</th>
-            <th>Prefix</th>
-            <th>Action</th>
-        </tr>
-        {% for dept in departments %}
-        <tr>
-            <td>{{ dept.department_id }}</td>
-            <td>{{ dept.department_name }}</td>
-            <td>{{ dept.prefix }}</td>
-            <td>
-                <button style="background:#1e90ff; color:white; border:none; padding:5px 10px; border-radius:3px;"
+  <div class="card border-0 shadow-sm rounded-4">
+    <div class="card-body p-4">
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="bg-dark text-white rounded-top">
+            <tr>
+              <th class="text-center">ID</th>
+              <th>Name</th>
+              <th>Prefix</th>
+              <th class="text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for dept in departments %}
+            <tr class="table-row-hover">
+              <td class="text-center fw-semibold">{{ dept.department_id }}</td>
+              <td>{{ dept.department_name }}</td>
+              <td>{{ dept.prefix }}</td>
+              <td class="text-center">
+                <button class="btn btn-sm btn-outline-dark rounded-pill me-2 px-3"
                         onclick="openEditModal('{{ dept.department_id }}', '{{ dept.department_name }}', '{{ dept.prefix }}')">
-                    Edit
+                  Edit
                 </button>
-                <button style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:3px;"
+                <button class="btn btn-sm btn-outline-danger rounded-pill px-3"
                         onclick="confirmDelete('{{ dept.department_id }}')">
-                    Delete
+                  Delete
                 </button>
-            </td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="4" style="text-align:center;">No departments found.</td></tr>
-        {% endfor %}
-    </table>
-
-    <div style="margin-top: 20px;">
-        <a href="{% url 'add_department' %}" 
-           style="background: #0d5c7d; color: white; padding: 8px 16px; border-radius: 5px; text-decoration: none;">
-           + Add Department
-        </a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" class="text-center text-muted py-4">No departments found.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
+  </div>
 </div>
 
-<!-- ✅ Hidden Edit Modal -->
-<div id="editModal" 
-     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-     background:rgba(0,0,0,0.6); justify-content:center; align-items:center; z-index:999;">
-    <div style="background:white; padding:20px; border-radius:10px; width:400px;">
-        <h3>Edit Department</h3>
-        <form id="editForm" method="post" action="{% url 'update_department' %}">
-            {% csrf_token %}
-            <input type="hidden" id="edit_id" name="department_id">
-            <label>Name:</label><br>
-            <input type="text" id="edit_name" name="department_name" required><br><br>
-            <label>Prefix:</label><br>
-            <input type="text" id="edit_prefix" name="prefix" required><br><br>
-
-            <button type="submit" 
-                    style="background:#1e90ff; color:white; border:none; padding:8px 15px; border-radius:5px;">Save</button>
-            <button type="button" onclick="closeEditModal()" 
-                    style="background:#ccc; color:black; border:none; padding:8px 15px; border-radius:5px;">Cancel</button>
-        </form>
+<!-- ✨ Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow rounded-4">
+      <div class="modal-header border-0 bg-dark text-white rounded-top-4">
+        <h5 class="modal-title">Edit Department</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="editForm" method="post" action="{% url 'update_department' %}">
+        {% csrf_token %}
+        <input type="hidden" id="edit_id" name="department_id">
+        <div class="modal-body px-4 py-3">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Name</label>
+            <input type="text" id="edit_name" name="department_name" class="form-control form-control-lg rounded-3" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Prefix</label>
+            <input type="text" id="edit_prefix" name="prefix" class="form-control form-control-lg rounded-3" required>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pb-4">
+          <button type="submit" class="btn btn-dark rounded-pill px-4">Save</button>
+          <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
     </div>
+  </div>
 </div>
 
+<!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-// 🧠 Show edit modal
+// ✨ Open modal with data
 function openEditModal(id, name, prefix) {
-    const modal = document.getElementById('editModal');
-    modal.style.display = 'flex';
-    document.getElementById('edit_id').value = id;
-    document.getElementById('edit_name').value = name;
-    document.getElementById('edit_prefix').value = prefix;
+  const modal = new bootstrap.Modal(document.getElementById('editModal'));
+  document.getElementById('edit_id').value = id;
+  document.getElementById('edit_name').value = name;
+  document.getElementById('edit_prefix').value = prefix;
+  modal.show();
 }
 
-// 🧠 Close modal
-function closeEditModal() {
-    document.getElementById('editModal').style.display = 'none';
-}
-
-// 🧠 Delete confirmation
+// ✨ Delete confirmation
 function confirmDelete(id) {
-    Swal.fire({
-        title: 'Are you sure?',
-        text: "This action cannot be undone!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Yes, delete it!'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            window.location.href = '/departments/delete/' + id + '/';
-        }
-    });
+  Swal.fire({
+    title: 'Are you sure?',
+    text: "You won't be able to undo this.",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#000',
+    cancelButtonColor: '#6c757d',
+    confirmButtonText: 'Yes, delete it'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      window.location.href = '/departments/delete/' + id + '/';
+    }
+  });
 }
 </script>
+
+<style>
+/* 🌙 Minimalist Luxury Theme */
+.table thead th {
+  border: none;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+.table tbody td {
+  vertical-align: middle;
+  color: #333;
+}
+.table-row-hover:hover {
+  background-color: #f8f9fa !important;
+  transition: all 0.3s ease;
+}
+.btn {
+  transition: all 0.3s ease;
+}
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.modal-content {
+  animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+</style>
 {% endblock %}

@@ -174,12 +174,13 @@ def edit_counter(request, counter_id):
     # Optional if you want to handle GET (not needed with modal)
     return redirect("counter_list")
 
+
 def delete_counter(request, counter_id):
     counter = get_object_or_404(Counter, pk=counter_id)
     if request.method == "POST":
         counter.delete()
         return redirect("counter_list")
-    
+    return redirect("counter_list")
 
 
 

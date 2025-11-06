@@ -17,15 +17,13 @@ def add_department(request):
         form = DepartmentForm(request.POST)
         if form.is_valid():
             form.save()
-            departments = Department.objects.all()
-            messages.success(request, "✅ Department Added")
-
-            # return list after save
-            return render(request, "admin_dashboard.html", {"departments": departments})
-
+            messages.success(request, "✅ Department Added Successfully!")
+            # ✅ redirect to your departments page instead of rendering dashboard
+            return redirect("departments_list")
     else:
         form = DepartmentForm()
-        return render(request, "add_department.html", {"form": form})
+    
+    return render(request, "add_department.html", {"form": form})
     
 
 def update_department(request):
