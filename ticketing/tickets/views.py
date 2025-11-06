@@ -6,10 +6,10 @@ from services.models import Service
 from escpos.printer import Serial
 import qrcode
 from io import BytesIO
-
+import os
 
 def print_ticket_to_pos(request, service_id=None):
-    message = None  # feedback message
+    message = None  
 
     if request.method == 'POST':
         try:

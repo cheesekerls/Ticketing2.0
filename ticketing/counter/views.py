@@ -9,6 +9,13 @@ from .models import Counter
 from accounts.decorators import role_required, department_admin_required
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.urls import reverse
+from django.core.mail import EmailMultiAlternatives
+from django.conf import settings
+import secrets
 
 
 # ---------------------- ADMIN VIEWS ----------------------
@@ -31,30 +38,67 @@ def counter_list(request):
     })
 
 
+
 @role_required('Admin')
 @department_admin_required
 def add_counter(request):
-    """Add a new counter and assign multiple services."""
+    """Add a new counter, assign services, and send password setup link (Admin-style)."""
     employee_id = request.session.get('employee_id')
     employee = get_object_or_404(Employee, pk=employee_id)
     dept = employee.department
-
-    # ✅ Only show services from admin's department
     available_services = Service.objects.filter(department=dept)
 
     if request.method == 'POST':
         email = request.POST.get('email')
-        password = request.POST.get('password')
         counter_number = request.POST.get('counter_number')
         selected_services = request.POST.getlist('services')
 
+        # ✅ Prevent duplicates
+        if Counter.objects.filter(email=email).exists() or Employee.objects.filter(email=email).exists():
+            messages.error(request, "⚠️ A user with this email already exists.")
+            return redirect('counter_list')
+
+        # ✅ Create Employee entry for authentication
+        employee_account = Employee.objects.create(
+            email=email,
+            department=dept,
+            position="Counter",
+            password="",  # No password until they set it
+            is_active=True,
+        )
+
+        # ✅ Create Counter record linked to Employee
         counter = Counter.objects.create(
             email=email,
-            password=make_password(password),
             counter_number=counter_number,
-            department=dept
+            department=dept,
         )
         counter.services.set(selected_services)
+
+        # ✅ Generate a unique secure token for password setup
+        token = secrets.token_urlsafe(32)
+        employee_account.password_reset_token = token
+        employee_account.save()
+
+        # ✅ Build password setup link
+        reset_link = request.build_absolute_uri(
+            reverse('set_password', kwargs={'token': token})
+        )
+
+        # ✅ Send invitation email (HTML)
+        subject = "Set Your Password - Counter Account"
+        html_content = f"""
+            <p>Hello,</p>
+            <p>You’ve been added as a <strong>Counter</strong> in the <strong>{dept.department_name}</strong> Department.</p>
+            <p>Please click the link below to set your password and activate your account:</p>
+            <p><a href="{reset_link}">Set Password</a></p>
+            <p>If you did not expect this email, you can ignore it.</p>
+        """
+        msg = EmailMultiAlternatives(subject, "", settings.DEFAULT_FROM_EMAIL, [email])
+        msg.attach_alternative(html_content, "text/html")
+        msg.send()
+
+        messages.success(request, f"✅ Counter added successfully. Password setup link sent to {email}.")
         return redirect('counter_list')
 
     return render(request, 'add_counter.html', {
@@ -62,10 +106,9 @@ def add_counter(request):
         'department_name': dept.department_name,
     })
 
-
 # ---------------------- COUNTER DASHBOARD ----------------------
-
-def queue_dashboard(request):
+@role_required('Counter')
+def counter_dashboard(request):
     """
     Counter dashboard: show only tickets belonging to assigned services.
     """

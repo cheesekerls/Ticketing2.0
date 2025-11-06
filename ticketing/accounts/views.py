@@ -85,6 +85,8 @@ def universal_login(request):
                 return redirect("admin_dashboard")
             elif employee.position == "Staff":
                 return redirect("staff_dashboard")
+            elif employee.position == "Counter":   # ✅ Added this
+                return redirect("counter_dashboard")
             else:
                 messages.error(request, "No dashboard assigned for this role.")
                 return render(request, "login.html")
