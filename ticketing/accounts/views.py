@@ -318,34 +318,75 @@ def counter_list(request):
     return render(request, 'counter_list.html', context)
 
 
+
 def report_dashboard(request):
+    # ✅ Check if employee is logged in
+    employee_id = request.session.get('employee_id')
+    
+    if not employee_id:
+        messages.warning(request, 'Please login first.')
+        return redirect('universal_login')
+    
+    # ✅ Get employee and department
+    try:
+        employee = Employee.objects.get(employee_id=employee_id)
+        department = employee.department
+    except Employee.DoesNotExist:
+        messages.error(request, 'Employee not found. Please login again.')
+        return redirect('universal_login')
+    
+    # ✅ Check if employee has department
+    if not department:
+        messages.warning(request, 'You are not assigned to any department.')
+        context = {
+            'today_tickets': 0,
+            'monthly_tickets': 0,
+            'yearly_tickets': 0,
+            'total_tickets': 0,
+            'service_summary': [],
+            'monthly_data': [],
+            'department': None,
+            'employee': employee,
+        }
+        return render(request, 'admin_reports.html', context)
+    
+    # ✅ Date calculations
     today = now().date()
     month = today.month
     year = today.year
-
+    
+    print("=" * 50)
+    print(f"👤 Employee: {employee.name}")
+    print(f"🏢 Department: {department.department_name}")
+    print(f"🆔 Department ID: {department.department_id}")
+    print("=" * 50)
+    
+    # ✅ FIX: filter by department through service
+    tickets = Ticket.objects.filter(service__department=department)
+    
+    print(f"📊 Total tickets for {department.department_name}: {tickets.count()}")
+    
     # ✅ Count tickets (daily, monthly, yearly)
-    today_tickets = Ticket.objects.filter(created_at__date=today).count()
-    monthly_tickets = Ticket.objects.filter(created_at__year=year, created_at__month=month).count()
-    yearly_tickets = Ticket.objects.filter(created_at__year=year).count()
-    total_tickets = Ticket.objects.count()
-
-    # ✅ Ticket count per service
+    today_tickets = tickets.filter(created_at__date=today).count()
+    monthly_tickets = tickets.filter(created_at__year=year, created_at__month=month).count()
+    yearly_tickets = tickets.filter(created_at__year=year).count()
+    total_tickets = tickets.count()
+    
+    # ✅ Ticket count per service (for this department only)
     service_summary = (
-        Ticket.objects.values('service__service_name')
+        tickets.values('service__service_name')
         .annotate(total=Count('ticket_id'))
         .order_by('-total')
     )
-
-    # ✅ Ticket count per department (optional)
-   
-    # ✅ Data for chart
+    
+    # ✅ Monthly chart data (for this department only)
     monthly_data = (
-        Ticket.objects.filter(created_at__year=year)
+        tickets.filter(created_at__year=year)
         .values('created_at__month')
         .annotate(total=Count('ticket_id'))
         .order_by('created_at__month')
     )
-
+    
     context = {
         'today_tickets': today_tickets,
         'monthly_tickets': monthly_tickets,
@@ -353,6 +394,8 @@ def report_dashboard(request):
         'total_tickets': total_tickets,
         'service_summary': service_summary,
         'monthly_data': monthly_data,
+        'department': department,
+        'employee': employee,
     }
-
+    
     return render(request, 'admin_reports.html', context)
