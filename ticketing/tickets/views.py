@@ -9,134 +9,100 @@ from services.models import CompServices, Service
 import base64
 
 
-def kiosk_home(request):
-    """
-    Display services assigned to this kiosk (office)
-    """
-    comp = get_kiosk_comp(request)
-    if comp:
-        services = Service.objects.filter(comp=comp)
-    else:
-        services = Service.objects.none()  # No services if kiosk not recognized
-
-    return render(request, 'tickets/kiosk.html', {'services': services})
 
 
+# Detect kiosk by MAC address
 def get_kiosk_comp(request):
     """
-    Detect the kiosk machine by IP.
+    Automatically detect the kiosk by its MAC address.
     """
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0]
-    else:
-        ip = request.META.get('REMOTE_ADDR')
+    # This can be from a request header, or a hidden field in the kiosk browser
+    # Example: the kiosk sends X-KIOSK-MAC header
+    mac_address = request.headers.get('X-KIOSK-MAC')  # sent by kiosk browser
+    if not mac_address:
+        # fallback: manually configured MAC for testing
+        mac_address = request.GET.get('mac_address', '').strip()
 
     try:
-        comp = CompServices.objects.get(ip_address=ip)
+        comp = CompServices.objects.get(mac_address=mac_address)
     except CompServices.DoesNotExist:
         comp = None
     return comp
 
-import logging
+def kiosk_home(request):
+    """
+    Show services available for this kiosk automatically.
+    """
+    comp = get_kiosk_comp(request)
+    if not comp:
+        return render(request, 'tickets/kiosk.html', {
+            'services': [],
+            'comp': None,
+            'error': 'Kiosk MAC not recognized. Please register this machine.'
+        })
 
-logger = logging.getLogger(__name__)
+    services = Service.objects.filter(department=comp.department)
+    return render(request, 'tickets/kiosk.html', {
+        'services': services,
+        'comp': comp
+    })
 
 def print_ticket_to_pos(request, service_id=None):
     """
-    Create a ticket for a given service and lane (Regular/Priority),
-    ensuring separate counters for each lane.
+    Create a ticket for a service with lane (Regular/Priority)
     """
     message = None
     comp = get_kiosk_comp(request)
     ticket_qr = None
 
+    if not comp:
+        return render(request, 'tickets/kiosk.html', {
+            'services': [],
+            'comp': None,
+            'error': 'Kiosk MAC not recognized.'
+        })
+
     if request.method == 'POST':
-        try:
-            # Determine service
-            post_service_id = request.POST.get('service_id')
-            if post_service_id:
-                service = get_object_or_404(Service, pk=int(post_service_id))
-            elif service_id:
-                service = get_object_or_404(Service, pk=service_id)
-            else:
-                service = Service.objects.first()
+        service = get_object_or_404(Service, pk=service_id)
+        lane = request.POST.get('ticket_type', 'Regular')
+        today = timezone.now().date()
 
-            if not service:
-                return render(request, 'tickets/create_ticket.html', {
-                    'error': 'No service defined. Please create a Service first.'
-                })
+        last_ticket = Ticket.objects.filter(
+            service=service,
+            comp=comp,
+            lane=lane,
+            created_at__date=today
+        ).order_by('-queue_position').first()
 
-            lane = request.POST.get('ticket_type', 'Regular')
-            today = timezone.now().date()
+        next_position = (last_ticket.queue_position + 1) if last_ticket else 1
+        ticket_number = f"{service.service_name[:3].upper()}-{lane[:1]}{next_position:03d}"
 
-            # ✅ Separate queue for Regular and Priority
-            last_ticket = Ticket.objects.filter(
-                service=service,
-                comp=comp,
-                lane=lane,
-                created_at__date=today
-            ).order_by('-queue_position').first()
+        ticket = Ticket.objects.create(
+            ticket_number=ticket_number,
+            service=service,
+            comp=comp,
+            status='Waiting',
+            lane=lane,
+            queue_position=next_position,
+            created_at=timezone.now()
+        )
 
-            next_position = (last_ticket.queue_position + 1) if last_ticket else 1
+        # Generate QR code
+        qr = qrcode.make(ticket.ticket_number)
+        qr_io = BytesIO()
+        qr.save(qr_io, format='PNG')
+        ticket_qr = base64.b64encode(qr_io.getvalue()).decode()
 
-            # ✅ Ticket number with lane prefix (R or P)
-            ticket_number = f"{service.service_name[:3].upper()}-{lane[:1]}{next_position:03d}"
+        message = f"Ticket {ticket.ticket_number} successfully printed!"
 
-            # Create the ticket
-            ticket = Ticket.objects.create(
-                ticket_number=ticket_number,
-                service=service,
-                comp=comp,
-                status='Waiting',
-                lane=lane,
-                queue_position=next_position,
-                created_at=timezone.now()
-            )
+    services = Service.objects.filter(department=comp.department)
 
-            # Generate QR code
-            qr = qrcode.make(ticket.ticket_number)
-            qr_io = BytesIO()
-            qr.save(qr_io, format='PNG')
-            ticket_qr = base64.b64encode(qr_io.getvalue()).decode()
-
-            # Print to POS (if printer available)
-            try:
-                send_to_printer(
-                    f"""
-Ticket No: {ticket.ticket_number}
-Service: {ticket.service.service_name}
-Lane: {ticket.lane}
-Status: {ticket.status}
-Position: {ticket.queue_position}
-""",
-                    qr_data=ticket.ticket_number
-                )
-                message = f"Ticket {ticket.ticket_number} successfully printed!"
-            except Exception as e:
-                message = f"Ticket created but printing failed: {e}"
-
-            # Optional logging
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.info(f"Ticket {ticket.ticket_number} created for service {service.service_name} by kiosk {comp}")
-
-        except Exception as e:
-            message = f"Error: {e}"
-
-    # Show only services for this kiosk
-    if comp:
-        services = Service.objects.filter(comp=comp)
-    else:
-        services = Service.objects.none()
-
-    return render(request, 'tickets/create_ticket.html', {
+    return render(request, 'tickets/kiosk.html', {
         'services': services,
+        'comp': comp,
         'message': message,
         'ticket_qr': ticket_qr
     })
-
-
 def queue_status(request, ticket_number):
     ticket = get_object_or_404(Ticket, ticket_number=ticket_number)
     return render(request, 'tickets/queue_status.html', {'ticket': ticket})

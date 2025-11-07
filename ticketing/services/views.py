@@ -7,6 +7,9 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
+from .models import CompServices, Department
+from django.contrib.auth.decorators import login_required
+from .forms import CompServicesForm
 
 
 def service_list(request):
@@ -166,3 +169,59 @@ def check_service_duplicate(request):
     ).exists()
 
     return JsonResponse({'exists': exists})
+
+
+
+@login_required
+@role_required('Moderator')
+def machine_kiosk_view(request):
+    kiosks = CompServices.objects.select_related('department').all()
+    
+    if request.method == "POST":
+        form = CompServicesForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Machine/Kiosk added successfully!")
+            return redirect('machine_kiosk')
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = CompServicesForm()
+
+    context = {
+        'form': form,
+        'kiosks': kiosks
+    }
+    return render(request, 'machine_kiosk.html', context)
+def update_kiosk(request, comp_id):
+    kiosk = get_object_or_404(CompServices, comp_id=comp_id)
+
+    if request.method == "POST":
+        mac_address = request.POST.get('mac_address', '').strip()
+        role = request.POST.get('role', '').strip()
+        department_name = request.POST.get('department', '').strip()
+
+        if not mac_address or not role or not department_name:
+            messages.error(request, "All fields are required.")
+            return redirect('machine_kiosk')
+
+        try:
+            # Update department based on name, or create if not exist
+            department, created = Department.objects.get_or_create(department_name=department_name)
+            kiosk.mac_address = mac_address
+            kiosk.role = role
+            kiosk.department = department
+            kiosk.save()
+            messages.success(request, "Machine/Kiosk updated successfully!")
+        except Exception as e:
+            messages.error(request, f"Error updating kiosk: {e}")
+
+        return redirect('machine_kiosk')
+
+@login_required
+@role_required('Moderator')
+def delete_kiosk(request, pk):
+    kiosk = get_object_or_404(CompServices, pk=pk)
+    kiosk.delete()
+    messages.success(request, "Machine/Kiosk deleted successfully!")
+    return redirect('machine_kiosk')
