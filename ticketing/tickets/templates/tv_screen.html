@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{{ department.department_name }} - Now Serving</title>
+  <style>
+    body {
+      background: black;
+      color: white;
+      text-align: center;
+      font-family: Arial, sans-serif;
+      padding: 40px;
+    }
+    #current {
+      font-size: 150px;
+      color: #00e676;
+      margin-top: 100px;
+    }
+  </style>
+</head>
+<body>
+  <h1>{{ department.department_name }} Queue</h1>
+  <div id="current">Waiting...</div>
+
+  <script>
+    const deptId = "{{ department.id }}";
+    const eventSource = new EventSource(`/sse/department/${deptId}/`);
+
+    eventSource.onmessage = function(event) {
+      const data = JSON.parse(event.data);
+      document.getElementById('current').innerText = data.ticket_number;
+    };
+  </script>
+</body>
+</html>

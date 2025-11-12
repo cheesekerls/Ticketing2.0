@@ -1,19 +1,28 @@
 # ticketing/tickets/models.py
 from django.db import models
 from django.utils import timezone
-from services.models import Service
-from services.models import Service, CompServices
-
+from departments.models import Service
+from departments.models import CompServices
 class Ticket(models.Model):
+
+    TICKET_STATUS = [
+        ('Waiting', 'Waiting'),
+        ('Called', 'Called'),
+        ('Served', 'Served'),
+        ('Skipped', 'Skipped'),
+        ('Cancelled', 'Cancelled')
+     ]
+
     ticket_id = models.AutoField(primary_key=True)
     ticket_number = models.CharField(max_length=20)
     lane = models.CharField(max_length=50, blank=True, null=True)
-    status = models.CharField(max_length=50, blank=True, null=True)
+    status = models.CharField(max_length=20, choices=TICKET_STATUS, default='Waiting')
     service = models.ForeignKey(Service, on_delete=models.CASCADE)
     comp = models.ForeignKey(CompServices, on_delete=models.SET_NULL, null=True, blank=True)
+    assigned_counter = models.ForeignKey('accounts.Counter', null=True, blank=True, on_delete=models.SET_NULL, related_name='assigned_tickets')
     created_at = models.DateTimeField(default=timezone.now, editable=False)
     queue_position = models.IntegerField(default=0)
-
+   
     def __str__(self):
         return self.ticket_number
 

@@ -1,12 +1,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Ticket, ClaimedTicket
+from .models import Ticket, models
 from .print_utils import print_ticket_to_pos as send_to_printer
 from django.utils import timezone
 from escpos.printer import Serial
 import qrcode
 from io import BytesIO
-from services.models import CompServices, Service
+from departments.models import CompServices, Service
 import base64
+
 
 
 
@@ -48,61 +49,91 @@ def kiosk_home(request):
     })
 
 def print_ticket_to_pos(request, service_id=None):
-    """
-    Create a ticket for a service with lane (Regular/Priority)
-    """
-    message = None
-    comp = get_kiosk_comp(request)
-    ticket_qr = None
-
-    if not comp:
-        return render(request, 'tickets/kiosk.html', {
-            'services': [],
-            'comp': None,
-            'error': 'Kiosk MAC not recognized.'
-        })
+    message = None  
 
     if request.method == 'POST':
-        service = get_object_or_404(Service, pk=service_id)
-        lane = request.POST.get('ticket_type', 'Regular')
-        today = timezone.now().date()
+        try:
+            # ✅ Get service
+            post_service_id = request.POST.get('service_id')
+            if post_service_id:
+                service = get_object_or_404(Service, pk=int(post_service_id))
+            elif service_id is not None:
+                service = get_object_or_404(Service, pk=service_id)
+            else:
+                service = Service.objects.first()
 
-        last_ticket = Ticket.objects.filter(
-            service=service,
-            comp=comp,
-            lane=lane,
-            created_at__date=today
-        ).order_by('-queue_position').first()
+            if not service:
+                return render(request, 'tickets/kiosk.html', {
+                    'error': 'No service defined. Please create a Service first.'
+                })
 
-        next_position = (last_ticket.queue_position + 1) if last_ticket else 1
-        ticket_number = f"{service.service_name[:3].upper()}-{lane[:1]}{next_position:03d}"
+            lane = request.POST.get('ticket_type', 'Regular')
+            today = timezone.now().date()
 
-        ticket = Ticket.objects.create(
-            ticket_number=ticket_number,
-            service=service,
-            comp=comp,
-            status='Waiting',
-            lane=lane,
-            queue_position=next_position,
-            created_at=timezone.now()
-        )
+            # ✅ Separate queue for Regular and Priority
+            last_ticket = Ticket.objects.filter(
+                service=service,
+                lane=lane,
+                created_at__date=today
+            ).order_by('-queue_position').first()
 
-        # Generate QR code
-        qr = qrcode.make(ticket.ticket_number)
-        qr_io = BytesIO()
-        qr.save(qr_io, format='PNG')
-        ticket_qr = base64.b64encode(qr_io.getvalue()).decode()
+            next_position = (last_ticket.queue_position + 1) if last_ticket else 1
 
-        message = f"Ticket {ticket.ticket_number} successfully printed!"
+            # ✅ Ticket number with lane prefix (R or P)
+            ticket_number = f"{service.service_name[:3].upper()}-{lane[:1]}{next_position:03d}"
 
-    services = Service.objects.filter(department=comp.department)
+            # ✅ Assign ticket to least busy counter for this service
+            counters = service.counter_set.all()  # all counters handling this service
+            counters = counters.annotate(
+                waiting_count=models.Count(
+                    'assigned_tickets',
+                    filter=models.Q(assigned_tickets__status__in=['Waiting', 'Skipped'])
+                )
+            ).order_by('waiting_count')
 
+            assigned_counter = counters.first() if counters else None
+
+            # ✅ Create the ticket
+            ticket = Ticket.objects.create(
+                ticket_number=ticket_number,
+                service=service,
+                status="Waiting",
+                lane=lane,
+                queue_position=next_position,
+                assigned_counter=assigned_counter,  # ← assign counter
+                created_at=timezone.now()
+            )
+
+            # ✅ Ticket text
+            ticket_text = f"""
+             Ticket No: {ticket.ticket_number}
+             Service: {ticket.service.service_name}
+             Lane: {ticket.lane}
+            """
+
+            # ✅ QR Code
+            qr = qrcode.make(f"{ticket.ticket_number}")
+            qr_io = BytesIO()
+            qr.save(qr_io, format="PNG")
+            qr_bytes = qr_io.getvalue()
+
+            # ✅ Print
+            try:
+                send_to_printer(ticket_text, qr_data=ticket.ticket_number)
+                message = f"{ticket.ticket_number} successfully printed!"
+            except Exception as e:
+                message = f"Ticket created but printing failed: {e}"
+
+        except Exception as e:
+            message = f"Error: {e}"
+
+    # Always render page
+    services = Service.objects.all()
     return render(request, 'tickets/kiosk.html', {
         'services': services,
-        'comp': comp,
-        'message': message,
-        'ticket_qr': ticket_qr
+        'message': message
     })
+
 def queue_status(request, ticket_number):
     ticket = get_object_or_404(Ticket, ticket_number=ticket_number)
     return render(request, 'tickets/queue_status.html', {'ticket': ticket})

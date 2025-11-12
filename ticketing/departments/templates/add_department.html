@@ -1,33 +1,177 @@
-{% extends "superadmin_dashboard.html" %}
+{% extends "admin_dashboard.html" %}
 
 {% block title %}Add Department{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
-  <div class="card shadow-sm p-4" style="max-width: 500px; margin: auto;">
-      <h4 class="mb-4 text-center text-primary">Add Department</h4>
-{% if messages %}
-  {% for message in messages %}
-    <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
-        {{ message }}
-    </div>
-  {% endfor %}
-{% endif %}
-      <form method="post" id="deptForm">
-          {% csrf_token %}
-          <div class="mb-3">
-              <label for="id_department_name" class="form-label">Department Name</label>
-              <input type="text" name="department_name" id="id_department_name" class="form-control" required>
-          </div>
+  <div class="card border-0 shadow-sm rounded-4 p-4" style="max-width: 500px; margin: auto;">
+    <h4 class="mb-4 text-center fw-bold text-dark" id="pageTitle">Add Department</h4>
 
-          <div class="mb-3">
-              <label for="id_prefix" class="form-label">Prefix</label>
-              <input type="text" name="prefix" id="id_prefix" class="form-control" required>
-          </div>
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert d-none" data-msg="{{ message }}" data-type="{{ message.tags }}"></div>
+      {% endfor %}
+    {% endif %}
 
-          <div class="text-center">
-              <button type="submit" class="btn btn-primary px-4">Add</button>
-          </div>
-      </form>
+    <form method="post" id="deptForm">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label for="id_department_name" class="form-label fw-semibold">Department Name</label>
+        <input type="text" name="department_name" id="id_department_name"
+               class="form-control form-control-lg rounded-3 shadow-sm"
+               placeholder="Enter department name" required>
+        <small id="deptWarning" class="text-danger fw-semibold mt-2" style="display:none;">
+          ⚠️ Department name already exists.
+        </small>
+      </div>
+
+      <div class="mb-4">
+        <label for="id_prefix" class="form-label fw-semibold">Prefix</label>
+        <input type="text" name="prefix" id="id_prefix"
+               class="form-control form-control-lg rounded-3 shadow-sm"
+               placeholder="Enter prefix (e.g. HR, IT)" required>
+      </div>
+
+      <div class="text-center">
+        <button type="submit" class="btn btn-dark-blue rounded-pill px-4 shadow-sm fw-semibold">
+          Add Department
+        </button>
+      </div>
+    </form>
   </div>
 </div>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+// 🌙 Dark mode toggle for title
+function applyDarkMode(isDark) {
+  const pageTitle = document.getElementById('pageTitle');
+  if (pageTitle) {
+    pageTitle.style.color = isDark ? '#ffffff' : '#000000';
+  }
+}
+const darkMode = localStorage.getItem('darkMode') === 'true';
+applyDarkMode(darkMode);
+
+// 🟦 Real-time duplicate check for department name
+const deptInput = document.getElementById('id_department_name');
+const deptWarning = document.getElementById('deptWarning');
+const submitBtn = document.querySelector('#deptForm button[type="submit"]');
+let debounceTimer;
+
+deptInput.addEventListener('input', function () {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    const deptName = this.value.trim();
+    if (!deptName) {
+      deptWarning.style.display = 'none';
+      submitBtn.disabled = false;
+      return;
+    }
+
+    fetch(`/departments/check-name/?name=${encodeURIComponent(deptName)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.exists) {
+          deptWarning.style.display = 'block';
+          submitBtn.disabled = true;  // ❌ Disable button if exists
+        } else {
+          deptWarning.style.display = 'none';
+          submitBtn.disabled = false; // ✅ Enable button if not exists
+        }
+      })
+      .catch(() => {
+        deptWarning.style.display = 'none';
+        submitBtn.disabled = false;
+      });
+  }, 300);
+});
+
+// 🟦 SweetAlert popups for success/error messages
+document.addEventListener('DOMContentLoaded', () => {
+  const alerts = document.querySelectorAll('.alert[data-msg]');
+  alerts.forEach(el => {
+    const msg = el.dataset.msg;
+    const type = el.dataset.type;
+
+    Swal.fire({
+      icon: type === 'success' ? 'success' : 'error',
+      title: msg,
+      showConfirmButton: false,
+      timer: 2000,
+      background: '#ffffff',
+      color: '#1e3a5f',
+      confirmButtonColor: '#1e3a5f',
+      iconColor: type === 'success' ? '#1e3a5f' : '#dc3545',
+      timerProgressBar: true,
+      customClass: {
+        popup: 'rounded-4 shadow-sm'
+      }
+    });
+  });
+});
+</script>
+
+<style>
+/* === Consistent look with Add Admin === */
+.card {
+  border-radius: 1.5rem !important;
+  background-color: #ffffff;
+  padding: 2rem;
+}
+
+h4#pageTitle {
+  color: #000000; /* ✅ Black title */
+  font-weight: 700;
+}
+
+.form-label {
+  color: #0a0a0a;
+  font-weight: 600;
+}
+
+.form-control {
+  border: 1px solid #ccc;
+  padding: 0.8rem 1rem;
+  font-size: 1rem;
+  color: #333;
+  box-shadow: none;
+}
+
+.form-control:focus {
+  border-color: #1e3a5f;
+  box-shadow: 0 0 0 0.2rem rgba(30, 58, 95, 0.15);
+}
+
+.btn-dark-blue {
+  background-color: #1e3a5f;
+  color: #fff;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.btn-dark-blue:hover {
+  background-color: #16314a;
+  color: #fff;
+  transform: scale(1.02);
+}
+
+.text-danger {
+  font-size: 0.9rem;
+  display: block;
+  margin-top: 0.25rem;
+}
+
+/* Smooth animation on card */
+.card {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+</style>
 {% endblock %}

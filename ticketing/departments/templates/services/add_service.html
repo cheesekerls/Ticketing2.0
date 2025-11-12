@@ -1,0 +1,186 @@
+{% extends "moderator/moderator_dashboard.html" %}
+{% load static %}
+
+{% block title %}Add Service{% endblock %}
+
+{% block content %}
+<head>
+  <!-- ✅ SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<div class="content-area" style="max-width:600px; margin:30px auto;">
+  <div style="background:#ffffff; padding:30px 40px; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.08);">
+    <h2 style="margin-bottom:25px; color:#1e3a5f; font-weight:700; font-size:1.8rem;">Add New Service</h2>
+
+    <form method="post" style="display:flex; flex-direction:column; gap:20px;">
+      {% csrf_token %}
+      <input type="hidden" id="department-id" value="{{ department_id }}">
+
+      <div style="font-size:14px; color:#555;">
+        <strong>Department:</strong> {{ department_name }}
+      </div>
+
+      <!-- Service input fields -->
+      <div id="service-fields">
+        <div class="service-field" style="display:flex; flex-direction:column; gap:5px;">
+          <div style="display:flex; gap:10px; align-items:center;">
+            <input type="text" name="service_name[]" required placeholder="Enter service name"
+                   class="service-input"
+                   style="flex:1; padding:12px; border:1px solid #ccc; border-radius:8px; font-size:14px;"
+                   data-duplicate="false">
+            <button type="button" class="remove-btn"
+                    style="background:#dc3545; color:white; border:none; border-radius:6px; padding:8px 12px; cursor:pointer;">
+              ✕
+            </button>
+          </div>
+          <small class="duplicate-warning" style="color:#dc3545; font-size:13px; display:none;">
+            ⚠️ This service already exists or is duplicated.
+          </small>
+        </div>
+      </div>
+
+      <!-- Add another -->
+      <button type="button" id="add-field"
+              style="background:#198754; color:white; padding:10px 0; border:none; border-radius:8px; font-weight:600; cursor:pointer;">
+        + Add Another Service
+      </button>
+
+      <!-- Save buttons -->
+      <div style="display:flex; gap:15px; margin-top:10px;">
+        <button type="submit"
+                style="flex:1; background:#1e3a5f; color:white; padding:12px 0; border:none; border-radius:8px; font-weight:600; cursor:pointer;">
+          Save All
+        </button>
+        <a href="{% url 'service_list' %}"
+           style="flex:1; text-align:center; background:#f0f0f0; color:#333; padding:12px 0; border-radius:8px; text-decoration:none; font-weight:600;">
+          Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+const baseUrl = "{% url 'check_service_duplicate' %}";
+const deptId = document.getElementById('department-id').value;
+const saveBtn = document.querySelector('button[type="submit"]');
+
+// 🔍 Duplicate check
+async function checkDuplicate(input) {
+  const name = input.value.trim();
+  const warning = input.parentElement.parentElement.querySelector('.duplicate-warning');
+
+  if (!name) {
+    input.dataset.duplicate = 'false';
+    warning.style.display = 'none';
+    input.style.borderColor = '#ccc';
+    checkAllInputs();
+    return;
+  }
+
+  const allInputs = [...document.querySelectorAll('.service-input')];
+  const sameCount = allInputs.filter(i => i.value.trim().toLowerCase() === name.toLowerCase()).length;
+  if (sameCount > 1) {
+    input.dataset.duplicate = 'true';
+    warning.textContent = '⚠️ Duplicate within form.';
+    warning.style.display = 'block';
+    input.style.borderColor = '#dc3545';
+    checkAllInputs();
+    return;
+  }
+
+  try {
+    const res = await fetch(`${baseUrl}?name=${encodeURIComponent(name)}&department_id=${deptId}`);
+    const data = await res.json();
+
+    if (data.exists) {
+      input.dataset.duplicate = 'true';
+      warning.textContent = '⚠️ This service already exists in your department.';
+      warning.style.display = 'block';
+      input.style.borderColor = '#dc3545';
+    } else {
+      input.dataset.duplicate = 'false';
+      warning.style.display = 'none';
+      input.style.borderColor = '#28a745';
+    }
+  } catch (err) {
+    console.error('Error checking duplicate:', err);
+  } finally {
+    checkAllInputs();
+  }
+}
+
+// Add/remove fields
+document.getElementById('add-field').addEventListener('click', () => {
+  const container = document.getElementById('service-fields');
+  const div = document.createElement('div');
+  div.className = 'service-field';
+  div.style.display = 'flex';
+  div.style.flexDirection = 'column';
+  div.style.gap = '5px';
+  div.innerHTML = `
+    <div style="display:flex; gap:10px; align-items:center;">
+      <input type="text" name="service_name[]" required placeholder="Enter service name"
+             class="service-input"
+             style="flex:1; padding:12px; border:1px solid #ccc; border-radius:8px; font-size:14px;"
+             data-duplicate="false">
+      <button type="button" class="remove-btn"
+              style="background:#dc3545; color:white; border:none; border-radius:6px; padding:8px 12px; cursor:pointer;">
+        ✕
+      </button>
+    </div>
+    <small class="duplicate-warning" style="color:#dc3545; font-size:13px; display:none;">
+      ⚠️ This service already exists or is duplicated.
+    </small>`;
+  container.appendChild(div);
+  checkAllInputs();
+});
+
+document.addEventListener('click', (e) => {
+  if (e.target && e.target.classList.contains('remove-btn')) {
+    e.target.closest('.service-field').remove();
+    checkAllInputs();
+  }
+});
+
+// Validate all
+function checkAllInputs() {
+  const inputs = document.querySelectorAll('.service-input');
+  let hasDuplicate = false;
+  let hasEmpty = false;
+  inputs.forEach(i => {
+    if (i.dataset.duplicate === 'true') hasDuplicate = true;
+    if (i.value.trim() === '') hasEmpty = true;
+  });
+  saveBtn.disabled = hasDuplicate || hasEmpty;
+  saveBtn.style.opacity = saveBtn.disabled ? '0.6' : '1';
+  saveBtn.style.cursor = saveBtn.disabled ? 'not-allowed' : 'pointer';
+}
+
+document.addEventListener('input', e => {
+  if (e.target.classList.contains('service-input')) checkDuplicate(e.target);
+});
+
+checkAllInputs();
+</script>
+
+{% if messages %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  {% for message in messages %}
+    Swal.fire({
+      title: "✅ {{ message|escapejs }}",
+      text: "Redirecting to service list...",
+      icon: "success",
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true
+    }).then(() => {
+      window.location.href = "{% url 'service_list' %}";
+    });
+  {% endfor %}
+});
+</script>
+{% endif %}
+{% endblock %}

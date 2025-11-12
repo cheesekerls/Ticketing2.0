@@ -26,15 +26,15 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.models import User  # or your CustomUser model
 from django.contrib.auth.hashers import make_password
-from accounts.decorators import department_admin_required, role_required
+from accounts.decorators import department_moderator_required, role_required
 from django.contrib.auth.hashers import check_password
 from django.contrib.auth import authenticate, login, logout
 import secrets
 from accounts.models import Employee as StaffEmployee  # rename to avoid clash
 from .forms import ChangePasswordForm
 from accounts.models import Employee  # or your Admin user model
-from services.models import Service
-from counter.models import Counter
+from departments.models import Service
+from .models import Counter
 from tickets.models import Ticket
 from datetime import date
 import json
@@ -42,7 +42,10 @@ from django.db.models import Count
 from django.http import HttpResponse
 import csv
 from django.utils.timezone import now
-
+from django.http import JsonResponse
+from django.db import transaction
+from django.utils.crypto import get_random_string
+import urllib.parse
 
 User = get_user_model()
 
@@ -52,10 +55,9 @@ def universal_login(request):
         identifier = request.POST.get("email")  # can be email OR username
         password = request.POST.get("password")
 
-        # ========== 1️⃣ MODERATOR (Django built-in User) ==========
+        # ========== 1️⃣ DJANGO USER (Admin / Moderator via UserProfile) ==========
         user = None
         try:
-            # detect if identifier looks like an email
             if "@" in identifier:
                 user_obj = User.objects.filter(email=identifier).first()
             else:
@@ -69,9 +71,9 @@ def universal_login(request):
         if user is not None:
             login(request, user)
             request.session["email"] = user.email
-            return redirect("moderator_dashboard")
+            return redirect("admin_dashboard")
 
-        # ========== 2️⃣ EMPLOYEE (Admin / Staff) ==========
+        # ========== 2️⃣ EMPLOYEE (Moderator / Staff) ==========
         employee = None
         try:
             if "@" in identifier:
@@ -89,64 +91,64 @@ def universal_login(request):
             )
             request.session["email"] = employee.email
 
-            if employee.position == "Admin":
-                return redirect("admin_dashboard")
-            elif employee.position == "Staff":
-                return redirect("staff_dashboard")
+            if employee.position.lower() == "moderator":
+                return redirect("moderator_dashboard")
             else:
                 messages.error(request, "No dashboard assigned for this role.")
                 return render(request, "login.html")
 
-        # ========== 3️⃣ COUNTER (Queue Users) ==========
+        # ========== 3️⃣ COUNTER (Queue Counter Users) ==========
         counter = None
         try:
-            if "@" in identifier and hasattr(Counter, "email"):
+            if "@" in identifier:
                 counter = Counter.objects.filter(email=identifier).first()
         except Exception:
             counter = None
 
         if counter:
-            # support both hashed and plain passwords
-              if check_password(password, counter.password) or counter.password == password:
-                request.session["email"] = counter.email  # use email as identifier
-                return redirect("queue_dashboard")
+            if check_password(password, counter.password) or counter.password == password:
+                # ✅ Save counter_id for decorators & sessions
+                request.session["counter_id"] = counter.counter_id
+                request.session["email"] = counter.email
+                messages.success(request, f"Welcome, Counter {counter.counter_number}!")
+                return redirect("counter_dashboard")
 
         # ========== ❌ NO MATCH ==========
-        messages.error(request, "Invalid username/email or password")
+        messages.error(request, "Invalid username/email or password.")
         return render(request, "login.html")
 
     return render(request, "login.html")
+
 
 def custom_logout(request):
     logout(request)
     request.session.flush()
     return redirect("login")
-
-@role_required(["Moderator"])
-def moderator_dashboard(request):
+@role_required(["Admin"])
+def admin_dashboard(request):
     total_departments = Department.objects.count()
-    total_admins = Employee.objects.filter(position='Admin').count()  # assuming position='admin'
+    total_moderators = Employee.objects.filter(position='Moderator').count()  # assuming position='admin'
 
     # For chart
     departments = Department.objects.all()
     department_labels = [dept.department_name for dept in departments]
-    admins_counts = [Employee.objects.filter(position='Admin', department=dept).count() for dept in departments]
+    moderators_counts = [Employee.objects.filter(position='Moderator', department=dept).count() for dept in departments]
 
-    # Get all admins for table
-    admins = Employee.objects.filter(position='Admin').select_related('department')
+    # Get all moderators for table
+    moderators = Employee.objects.filter(position='Moderator').select_related('department')
 
     context = {
         'total_departments': total_departments,
-        'total_admins': total_admins,
+        'total_moderators': total_moderators,
         'department_labels': department_labels,
-        'admins_counts': admins_counts,
-        'admins': admins
+        'moderators_counts': moderators_counts,
+        'moderators': moderators
     }
 
-    return render(request, 'superadmin_dashboard.html', context)
-@role_required('Admin')
-@department_admin_required
-def admin_dashboard(request):
+    return render(request, 'admin_dashboard.html', context)
+
+@role_required('Moderator')
+def moderator_dashboard(request):
     employee_id = request.session.get('employee_id')
     if not employee_id:
         return redirect('login')
@@ -161,32 +163,26 @@ def admin_dashboard(request):
         'total_services': total_services,
         'total_users': total_users,
     }
-    return render(request, 'admin_dashboard.html', context)
+    return render(request, 'moderator/moderator_dashboard.html', context)
 
 
 
-@department_admin_required
+@department_moderator_required
 def department_dashboard(request, department_id):
     employee = Employee.objects.get(email=request.session.get("email"))
-    return render(request, 'admin_dashboard.html', {"employee": employee})
+    return render(request, 'moderator_dashboard.html', {"employee": employee})
 
-
-@role_required(["Staff"])
-def staff_dashboard(request):
-    return render(request, "staff_dashboard.html")
-
-
-@role_required("Moderator")
-def admin_list(request):
+@role_required("Admin")
+def moderator_list(request):
     employees = Employee.objects.all()
-    return render(request, "admin_list.html", {"employees": employees})
+    return render(request, "moderator/moderator_list.html", {"employees": employees})
 
 
 def forbidden_view(request):
     return render(request, '403.html', status=403)
 
 
-def edit_employee(request):
+def edit_moderator(request):
     if request.method == 'POST':
         emp_id = request.POST.get('id')
         employee = get_object_or_404(Employee, pk=emp_id)
@@ -196,10 +192,10 @@ def edit_employee(request):
         messages.success(request, "Employee updated successfully!")
         employee.save()
 
-    return redirect('admin_list')
+    return redirect('moderator_list')
 
-def admin_change_password(request):
-    user_id = request.session.get('employee_id')  # your custom admin session
+def moderator_change_password(request):
+    user_id = request.session.get('employee_id')  # your custom moderator session
     if not user_id:
         return redirect('login')
 
@@ -211,18 +207,18 @@ def admin_change_password(request):
             user.set_password(form.cleaned_data['new_password1'])
             user.save()
             messages.success(request, "Password updated successfully!")
-            return redirect('admin_dashboard')
+            return redirect('moderator_dashboard')
     else:
         form = ChangePasswordForm(user)
 
-    return render(request, 'change_password.html', {'form': form})
+    return render(request, 'moderator/change_password.html', {'form': form})
 
 
-def delete_employee(request, emp_id):
+def delete_moderator(request, emp_id):
     employee = get_object_or_404(Employee, pk=emp_id)
     employee.delete()
     messages.success(request, "Employee deleted successfully!")
-    return redirect('admin_list')
+    return redirect('moderator_list')
 
 
 
@@ -231,14 +227,14 @@ def reports(request):
 
 
 @login_required
-@role_required('Moderator')
-def add_admin(request):
+@role_required('Admin')
+def add_moderator(request):
     if request.method == 'POST':
         form = AdminInviteForm(request.POST)
     else:
         form = AdminInviteForm()
 
-    departments_with_admin = Employee.objects.filter(position='Admin').values_list('department_id', flat=True)
+    departments_with_admin = Employee.objects.filter(position='Moderator').values_list('department_id', flat=True)
 
     # ✅ Only show departments that do NOT have an Admin yet
     form.fields['department'].queryset = Department.objects.exclude(department_id__in=departments_with_admin)
@@ -253,7 +249,7 @@ def add_admin(request):
             name=name,
             email=email,
             department=department,
-            position="Admin",
+            position="Moderator",
             password="",  # Empty for now until password is set
             is_active=True,
         )
@@ -268,10 +264,10 @@ def add_admin(request):
         )
 
         # ✅ Send email invitation
-        subject = "Set your Admin account password"
+        subject = "Set your Moderator account password"
         html_content = f"""
             <p>Hello {name},</p>
-            <p>You have been added as an Admin in <strong>{department.department_name}</strong>.</p>
+            <p>You have been added as a Moderator in <strong>{department.department_name}</strong>.</p>
             <p>Click the link below to set your password and activate your account:</p>
             <p><a href="{reset_link}">Set Password</a></p>
             <p>If you did not expect this email, you can ignore it.</p>
@@ -280,10 +276,10 @@ def add_admin(request):
         msg.attach_alternative(html_content, "text/html")
         msg.send()
 
-        messages.success(request, f"Admin '{name}' invited! A password setup email has been sent.")
-        return redirect('admin_list')
+        messages.success(request, f"Moderator '{name}' invited! A password setup email has been sent.")
+        return redirect('moderator_list')
 
-    return render(request, 'add_admin_department.html', {'form': form})
+    return render(request, 'moderator/add_moderator_department.html', {'form': form})
 
 
 def set_password(request, token):
@@ -304,21 +300,9 @@ def set_password(request, token):
         messages.success(request, "Password set successfully! You can now log in.")
         return redirect('login')
 
-    return render(request, 'set_password.html', {'employee': employee})
+    return render(request, 'moderator/set_password.html', {'employee': employee})
 
-@role_required('Admin')
-@department_admin_required
-def counter_list(request):
-    employee = Employee.objects.get(pk=request.session.get("employee_id"))
-    counters = Counter.objects.filter(department=employee.department)
-
-    context = {
-        'counters': counters
-    }
-    return render(request, 'counter_list.html', context)
-
-
-
+@role_required('Moderator')
 def report_dashboard(request):
     # ✅ Check if employee is logged in
     employee_id = request.session.get('employee_id')
@@ -348,7 +332,7 @@ def report_dashboard(request):
             'department': None,
             'employee': employee,
         }
-        return render(request, 'admin_reports.html', context)
+        return render(request, 'moderator/moderator_reports.html', context)
     
     # ✅ Date calculations
     today = now().date()
@@ -397,5 +381,417 @@ def report_dashboard(request):
         'department': department,
         'employee': employee,
     }
-    
-    return render(request, 'admin_reports.html', context)
+
+    return render(request, 'moderator/moderator_reports.html', context)
+
+
+
+
+# ---------------------- MODERATOR VIEWS ----------------------
+
+@role_required('Moderator')
+def counter_list(request):
+    """List all counters under the admin's department."""
+    employee_id = request.session.get('employee_id')
+    employee = get_object_or_404(Employee, pk=employee_id)
+    dept = employee.department
+    all_services = Service.objects.filter(department=dept)  # ✅ Fetch services for the department
+
+    counters = Counter.objects.filter(department=dept)
+    return render(request, 'counter/counter_list.html', {
+        'counters': counters,
+        'department_name': dept.department_name,
+        "all_services": all_services,  # ✅ Pass to template
+
+    })
+
+
+@role_required('Moderator')
+def add_counter(request):
+    """Moderator invites a new counter and assigns multiple services."""
+    employee_id = request.session.get('employee_id')
+    employee = get_object_or_404(Employee, pk=employee_id)
+    dept = employee.department
+
+    # ✅ Only show services from the moderator's department
+    available_services = Service.objects.filter(department=dept)
+
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        email = request.POST.get('email')
+        counter_number = request.POST.get('counter_number')
+        selected_services = request.POST.getlist('services')
+
+        # ✅ Generate secure password setup token
+        token = secrets.token_urlsafe(32)
+
+        # ✅ Create Counter (no password yet)
+        counter = Counter.objects.create(
+            name=name,
+            email=email,
+            password="",  # empty until they set it
+            password_reset_token=token,
+            counter_number=counter_number,
+            department=dept
+        )
+        counter.services.set(selected_services)
+
+        # ✅ Generate reset link for counter
+        reset_link = request.build_absolute_uri(
+            reverse('setpassword_counter', kwargs={'token': token})
+        )
+
+        # ✅ Send invitation email
+        subject = "Set your Counter account password"
+        html_content = f"""
+            <p>Hello {name},</p>
+            <p>You have been added as a Counter in the <strong>{dept.department_name}</strong> department.</p>
+            <p>Click the link below to set your password and activate your account:</p>
+            <p><a href="{reset_link}">Set Password</a></p>
+            <p>If you did not expect this email, you can ignore it.</p>
+        """
+        msg = EmailMultiAlternatives(subject, "", settings.DEFAULT_FROM_EMAIL, [email])
+        msg.attach_alternative(html_content, "text/html")
+        msg.send()
+
+        messages.success(request, f"Counter '{name}' invited! A password setup email has been sent.")
+        return redirect('counter_list')
+
+    return render(request, 'counter/add_counter.html', {
+        'services': available_services,
+        'department_name': dept.department_name,
+    })
+
+def setpassword_counter(request, token):
+    """Counter sets password after invitation."""
+    try:
+        counter = Counter.objects.get(password_reset_token=token)
+    except Counter.DoesNotExist:
+        messages.error(request, "Invalid or expired token.")
+        return redirect('login')  # adjust to your login URL name
+
+    if request.method == 'POST':
+        password = request.POST.get('password')
+        confirm_password = request.POST.get('confirm_password')
+
+        if password != confirm_password:
+            messages.error(request, "Passwords do not match.")
+        else:
+            counter.password = make_password(password)
+            counter.password_reset_token = None
+            counter.save()
+            messages.success(request, "Password set successfully! You can now log in.")
+            return redirect('login')  # adjust to your login URL name
+
+    return render(request, 'counter/setpassword_counter.html', {'token': token})
+
+
+
+def get_current_counter(request):
+    return getattr(request, 'counter', None)
+
+# ------------------------------
+# Auto-assign tickets
+# ------------------------------
+def assign_next_ticket_auto():
+    waiting_tickets = Ticket.objects.filter(status='Waiting').order_by('queue_position', 'created_at')
+
+    for ticket in waiting_tickets:
+        available_counters = Counter.objects.filter(
+            services=ticket.service,
+            status='Idle'
+        ).order_by('counter_number')
+
+        if available_counters.exists():
+            counter = available_counters.first()
+            ticket.status = 'Called'
+            ticket.assigned_counter = counter
+            ticket.save()
+            counter.status = 'Serving'
+            counter.save()
+
+# ------------------------------
+# Views
+# ------------------------------
+@role_required('Counter')
+def counter_dashboard(request):
+    counter = get_current_counter(request)
+    if not counter:
+        messages.error(request, "Counter not found.")
+        return redirect("login")
+
+    assigned_services = counter.services.all()
+
+    # Update queue positions
+    waiting_tickets = Ticket.objects.filter(
+        service__in=assigned_services,
+        status__in=['Waiting', 'Skipped']
+    ).order_by('created_at')
+
+    for idx, t in enumerate(waiting_tickets, start=1):
+        if not t.queue_position:
+            t.queue_position = idx
+            t.save()
+
+    tickets = Ticket.objects.filter(
+        assigned_counter=counter,
+        status__in=['Waiting', 'Called', 'Skipped']
+    ).order_by('queue_position')
+
+    current_ticket = tickets.filter(status='Called').last()
+
+    return render(request, 'counter/counter_dashboard.html', {
+        'tickets': tickets,
+        'current_ticket': current_ticket,
+        'assigned_services': assigned_services,
+        'counter_number': counter.counter_number,
+    })
+
+@role_required('Counter')
+def call_next_ticket(request):
+    if request.method != "POST":
+        return redirect("counter_dashboard")
+
+    counter = get_current_counter(request)
+    if not counter:
+        messages.error(request, "Counter not found.")
+        return redirect("login")
+
+    # Only tickets assigned to this counter
+    assigned_services = counter.services.all()
+
+    # Mark current ticket as Served (for this counter)
+    current_ticket = Ticket.objects.filter(
+        assigned_counter=counter,
+        status='Called'
+    ).last()
+    if current_ticket:
+        current_ticket.status = 'Served'
+        current_ticket.save()
+
+    # Call next waiting ticket (only for this counter)
+    next_ticket = Ticket.objects.filter(
+        assigned_counter=counter,
+        status='Waiting'
+    ).order_by('queue_position').first()
+
+    if next_ticket:
+        next_ticket.status = 'Called'
+        next_ticket.save()
+        messages.success(request, f"Now serving ticket {next_ticket.ticket_number}")
+    else:
+        messages.info(request, "No waiting tickets in your assigned services.")
+
+    return redirect("counter_dashboard")
+
+@role_required('Counter')
+def skip_ticket(request, ticket_number):
+    counter = get_current_counter(request)
+    if not counter:
+        messages.error(request, "Counter not found.")
+        return redirect("login")
+
+    assigned_services = counter.services.all()
+    ticket = Ticket.objects.filter(ticket_number=ticket_number, service__in=assigned_services).first()
+    if not ticket:
+        messages.error(request, "Ticket not found or not in your assigned services.")
+        return redirect("counter_dashboard")
+
+    ticket.status = 'Skipped'
+    ticket.save()
+
+    waiting_tickets = list(Ticket.objects.filter(
+        service__in=assigned_services,
+        status__in=['Waiting', 'Skipped']
+    ).order_by('queue_position'))
+
+    if len(waiting_tickets) >= 3:
+        waiting_tickets.insert(2, waiting_tickets.pop(waiting_tickets.index(ticket)))
+    elif len(waiting_tickets) > 0:
+        waiting_tickets.append(waiting_tickets.pop(waiting_tickets.index(ticket)))
+
+    for idx, t in enumerate(waiting_tickets, start=1):
+        if t.queue_position != idx:
+            t.queue_position = idx
+            t.save()
+
+    counter.status = 'Idle'
+    counter.save()
+    assign_next_ticket_auto()
+
+    messages.success(request, f"Ticket {ticket.ticket_number} skipped and moved in queue.")
+    return redirect("counter_dashboard")
+
+
+@role_required('Counter')
+def cancel_ticket(request, ticket_number):
+    if request.method == 'POST':
+        try:
+            ticket = Ticket.objects.get(ticket_number=ticket_number)
+            ticket.status = 'Cancelled'
+            ticket.save()
+            return JsonResponse({'success': True})
+        except Ticket.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Ticket not found'})
+    return JsonResponse({'success': False, 'error': 'Invalid request'})
+
+
+@role_required('Counter')
+def back_to_queue(request, ticket_number):
+    ticket = get_object_or_404(Ticket, ticket_number=ticket_number)
+    ticket.status = "Waiting"
+    ticket.assigned_counter = None
+    ticket.save()
+    assign_next_ticket_auto()
+    return redirect('counter_dashboard')
+
+# views.py
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import Counter
+
+def edit_counter(request, counter_id):
+    counter = get_object_or_404(Counter, pk=counter_id)
+
+    if request.method == "POST":
+        counter.email = request.POST.get("email")
+        counter.counter_number = request.POST.get("counter_number")
+
+        # ✅ Get all selected service IDs from form
+        service_ids = request.POST.getlist("services")
+
+        # ✅ Save Counter first (for M2M)
+        counter.save()
+
+        # ✅ Update many-to-many relationship
+        counter.services.set(service_ids)
+
+        messages.success(request, f"Counter '{counter.email}' updated successfully.")
+        return redirect("counter_list")  # change to your actual template view name
+
+    # Optional if you want to handle GET (not needed with modal)
+    return redirect("counter_list")
+
+def delete_counter(request, counter_id):
+    counter = get_object_or_404(Counter, pk=counter_id)
+    if request.method == "POST":
+        counter.delete()
+        return redirect("counter_list")
+
+
+
+#RESET PASSWORD
+
+def password_reset_request(request):
+    if request.method == "POST":
+        email = request.POST.get("email")
+
+        # Check 1: Built-in Django admin user
+        user = User.objects.filter(email=email).first()
+        if user:
+            token = get_random_string(50)
+            reset_link = request.build_absolute_uri(
+                reverse('password_reset_confirm', args=[token])
+            )
+            request.session[f'pwd_reset_{token}'] = {
+                'user_type': 'admin',
+                'user_id': user.id
+            }
+
+            send_mail(
+                "Password Reset Request",
+                f"Hi {user.username},\n\nClick the link to reset your password:\n{reset_link}",
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                fail_silently=False,
+            )
+            messages.success(request, "A password reset link has been sent to your email.")
+            return redirect('login')
+
+        # Check 2: Custom Moderator (Employee)
+        employee = Employee.objects.filter(email=email).first()
+        if employee:
+            token = get_random_string(50)
+            employee.password_reset_token = token
+            employee.save()
+
+            reset_link = request.build_absolute_uri(
+                reverse('password_reset_confirm', args=[token])
+            )
+            send_mail(
+                "Password Reset Request",
+                f"Hi {employee.name},\n\nClick the link to reset your password:\n{reset_link}",
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                fail_silently=False,
+            )
+            messages.success(request, "A password reset link has been sent to your email.")
+            return redirect('login')
+
+        # Check 3: Custom Counter
+        counter = Counter.objects.filter(email=email).first()
+        if counter:
+            token = get_random_string(50)
+            counter.password_reset_token = token
+            counter.save()
+
+            reset_link = request.build_absolute_uri(
+                reverse('password_reset_confirm', args=[token])
+            )
+            send_mail(
+                "Password Reset Request",
+                f"Hi {counter.name},\n\nClick the link to reset your password:\n{reset_link}",
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                fail_silently=False,
+            )
+            messages.success(request, "A password reset link has been sent to your email.")
+            return redirect('login')
+
+        # If email not found
+        messages.error(request, "No account found with that email address.")
+        return redirect('password_reset')
+
+    return render(request, 'resetpassword/password_reset.html')
+
+
+# =========================
+# RESET PASSWORD PAGE
+# =========================
+
+def password_reset_confirm(request, token):
+    # Try to find the user based on the token
+    employee = Employee.objects.filter(password_reset_token=token).first()
+    counter = Counter.objects.filter(password_reset_token=token).first()
+    session_data = request.session.get(f'pwd_reset_{token}')
+
+    if not employee and not counter and not session_data:
+        messages.error(request, "Invalid or expired reset link.")
+        return redirect('login')
+
+    if request.method == "POST":
+        new_password = request.POST.get("password")
+        confirm_password = request.POST.get("confirm_password")
+
+        if new_password != confirm_password:
+            messages.error(request, "Passwords do not match.")
+            return redirect(request.path)
+
+        if employee:
+            employee.password = new_password
+            employee.password_reset_token = None
+            employee.save()
+        elif counter:
+            counter.password = new_password
+            counter.password_reset_token = None
+            counter.save()
+        else:
+            from django.contrib.auth.hashers import make_password
+            user = User.objects.get(id=session_data['user_id'])
+            user.password = make_password(new_password)
+            user.save()
+            del request.session[f'pwd_reset_{token}']
+
+        messages.success(request, "Your password has been reset successfully.")
+        return redirect('login')
+
+    return render(request, 'resetpassword/password_reset_confirm.html')

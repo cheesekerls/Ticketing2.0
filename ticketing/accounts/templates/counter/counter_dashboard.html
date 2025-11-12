@@ -1,0 +1,318 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Counter Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
+
+  body {
+    background-color: #f8fafc;
+    font-family: 'Poppins', sans-serif;
+    color: #2d3436;
+  }
+
+  .dashboard-container {
+    width: 95%;
+    max-width: 1100px;
+    margin: 30px auto;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    padding: 25px 30px;
+  }
+
+  .header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 10px;
+  }
+
+  h2 {
+    font-weight: 600;
+    font-size: 1.5rem;
+    color: #1a1a1a;
+    margin-bottom: 5px;
+  }
+
+  .btn-logout {
+    background-color: #dc3545;
+    border: none;
+    color: #fff;
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: background 0.3s ease;
+  }
+
+  .btn-logout:hover {
+    background-color: #bb2d3b;
+  }
+
+  .ticket-card {
+    background-color: #fdfdfd;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 25px;
+  }
+
+  .btn-custom {
+    background-color: #198754;
+    border: none;
+    color: #fff;
+    font-weight: 500;
+    padding: 10px 22px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: background 0.3s ease;
+  }
+
+  .btn-custom:hover {
+    background-color: #157347;
+  }
+
+  .badge {
+    font-size: 0.8rem;
+    font-weight: 500;
+    border-radius: 6px;
+    padding: 5px 10px;
+  }
+
+  table {
+    border-radius: 8px;
+    overflow: hidden;
+    font-size: 0.9rem;
+  }
+
+  thead {
+    background-color: #0d6efd;
+    color: #fff;
+  }
+
+  th {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+  }
+
+  td {
+    vertical-align: middle;
+  }
+
+  tbody tr:hover {
+    background-color: #f9f9f9;
+  }
+
+  .btn-warning, .btn-danger, .btn-success {
+    border: none;
+    color: #fff;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 0.85rem;
+    transition: background 0.3s ease;
+  }
+
+  .btn-warning { background-color: #f0ad4e; }
+  .btn-warning:hover { background-color: #ec971f; }
+
+  .btn-danger { background-color: #dc3545; }
+  .btn-danger:hover { background-color: #bb2d3b; }
+
+  .btn-success { background-color: #198754; }
+  .btn-success:hover { background-color: #157347; }
+
+  .fade-in {
+    animation: fadeIn 0.5s ease-in;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .float-notice {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #4CAF50;
+    color: white;
+    font-weight: bold;
+    padding: 20px 40px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    z-index: 2000;
+    font-size: 20px;
+    text-align: center;
+    animation: fadeInOut 2s forwards;
+  }
+
+  @keyframes fadeInOut {
+    0% { opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  @media (max-width: 992px) {
+    .dashboard-container {
+      width: 95%;
+      padding: 20px;
+    }
+    .header-bar {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .btn-custom {
+      width: 100%;
+    }
+  }
+  </style>
+</head>
+
+<body>
+<div class="dashboard-container fade-in">
+  <div class="header-bar">
+    <div>
+      <h2>Counter Dashboard</h2>
+      <p class="text-muted mb-0">Counter: <strong>{{ counter_number }}</strong></p>
+    </div>
+    <a href="{% url 'logout' %}" class="btn btn-logout">Logout</a>
+  </div>
+
+  <!-- Assigned Services -->
+  <div class="mb-4">
+    <h6 class="fw-semibold mb-2">Assigned Services:</h6>
+    {% for s in assigned_services %}
+      <span class="badge bg-primary me-2">{{ s.service_name }}</span>
+    {% empty %}
+      <p class="text-muted">No assigned services found.</p>
+    {% endfor %}
+  </div>
+
+  <!-- Now Serving -->
+  <div class="ticket-card text-center">
+    <h5 class="fw-semibold mb-3">Now Serving</h5>
+    {% if current_ticket %}
+      <p class="fs-2 fw-bold text-success">{{ current_ticket.ticket_number }}</p>
+      <p>Service: <strong>{{ current_ticket.service.service_name }}</strong></p>
+    {% else %}
+      <p class="text-muted mb-0">No ticket is currently being served.</p>
+    {% endif %}
+  </div>
+
+  <!-- Call Next -->
+  <div class="text-center mb-4">
+    <form method="post" action="{% url 'call_next_ticket' %}" class="d-inline">
+      {% csrf_token %}
+      <button class="btn btn-custom">Call Next Ticket</button>
+    </form>
+  </div>
+
+  <!-- Queue Table -->
+  <div class="ticket-card">
+    <div class="table-responsive">
+      <table class="table align-middle table-bordered">
+        <thead>
+          <tr>
+            <th>Position</th>
+            <th>Ticket No.</th>
+            <th>Service</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in tickets %}
+          <tr>
+            <td>{{ t.queue_position }}</td>
+            <td class="fw-semibold">{{ t.ticket_number }}</td>
+            <td>{{ t.service.service_name }}</td>
+            <td>{{ t.status }}</td>
+            <td>
+              {% if t.status == "Skipped" %}
+                <form method="post" action="{% url 'back_to_queue' t.ticket_number %}" class="d-inline me-1">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-success btn-sm">Back to Queue</button>
+                </form>
+              {% else %}
+                <form method="post" action="{% url 'skip_ticket' t.ticket_number %}" class="d-inline me-1">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-warning btn-sm">Skip</button>
+                </form>
+              {% endif %}
+              <button type="button" class="btn btn-danger btn-sm cancel-ticket" data-ticket="{{ t.ticket_number }}">Cancel</button>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="text-center text-muted">No tickets in queue.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Floating notification -->
+<div id="float-notice" class="float-notice">Ticket skipped!</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+  const csrftoken = getCookie('csrftoken');
+
+  // Cancel ticket via AJAX
+  $(document).on('click', '.cancel-ticket', function() {
+    const ticketNumber = $(this).data('ticket');
+    if (confirm(`Cancel ticket ${ticketNumber}?`)) {
+      $.ajax({
+        url: `/counter/cancel_ticket/${ticketNumber}/`,
+        method: "POST",
+        headers: { "X-CSRFToken": csrftoken },
+        success: function(res) {
+          if (res.success) {
+            alert("Ticket cancelled successfully!");
+            location.reload();
+          } else {
+            alert(res.error || "Error cancelling ticket");
+          }
+        },
+        error: function(xhr) {
+          alert("Request failed:\n" + xhr.responseText);
+        }
+      });
+    }
+  });
+
+  // Show floating notice if ticket was skipped
+  {% if message and "skipped" in message %}
+    const notice = document.getElementById('float-notice');
+    notice.style.display = 'block';
+    setTimeout(() => { notice.style.display = 'none'; }, 2000);
+  {% endif %}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,131 @@
+{% extends "admin_dashboard.html" %}
+{% load static %}
+
+{% block title %}Manage Machines/Kiosks{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:1200px; margin:auto;">
+  <h2 class="mb-4" style="color:#0d47a1;">Manage Machines / Kiosks</h2>
+
+  {% if messages %}
+  <div id="popup-message-container">
+      {% for message in messages %}
+      <div class="popup-message alert alert-{{ message.tags }}">
+          {{ message }}
+      </div>
+      {% endfor %}
+  </div>
+
+  <style>
+  #popup-message-container {
+      position: fixed;
+      top: 30%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1050;
+      text-align: center;
+  }
+  .popup-message {
+      display: inline-block;
+      min-width: 250px;
+      padding: 15px 25px;
+      border-radius: 10px;
+      font-weight: bold;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      opacity: 1;
+      transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  </style>
+
+  <script>
+  setTimeout(function() {
+      const popup = document.querySelectorAll('.popup-message');
+      popup.forEach(p => {
+          p.style.opacity = '0';
+          p.style.transform = 'translate(-50%, -60%)';
+      });
+  }, 2000);
+  </script>
+  {% endif %}
+
+  <!-- Add Kiosk Form -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <h5 class="card-title mb-3">Add New Machine / Kiosk</h5>
+      <form method="POST" class="row g-3">
+        {% csrf_token %}
+        <div class="col-md-4">
+          <label class="form-label">MAC Address</label>
+          {{ form.mac_address }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Department</label>
+          {{ form.department }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">API Token (optional)</label>
+          {{ form.api_token }}
+        </div>
+
+        <!-- Hidden Role (auto-set as KIOSK in backend, just visual display) -->
+        <div class="col-12">
+          <p class="text-muted mb-1">Role: <strong>KIOSK (automatic)</strong></p>
+        </div>
+
+        <div class="col-12">
+          <button type="submit" class="btn btn-primary px-4">Add Machine</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Existing Kiosks Table -->
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h5 class="card-title mb-3">Existing Machines / Kiosks</h5>
+      <div class="table-responsive">
+        <table class="table table-striped align-middle">
+          <thead class="table-dark">
+            <tr>
+              <th>ID</th>
+              <th>MAC Address</th>
+              <th>API Token</th>
+              <th>Role</th>
+              <th>Department</th>
+              <th class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for kiosk in kiosks %}
+            <tr>
+              <td>{{ kiosk.comp_id }}</td>
+              <td>{{ kiosk.mac_address }}</td>
+              <td style="max-width:200px; word-break:break-all;">{{ kiosk.api_token }}</td>
+              <td>{{ kiosk.role }}</td>
+              <td>{{ kiosk.department.department_name }}</td>
+              <td class="text-center">
+                <a href="{% url 'update_kiosk' kiosk.comp_id %}" class="btn btn-sm btn-warning me-2">Edit</a>
+                <a href="{% url 'delete_kiosk' kiosk.comp_id %}" class="btn btn-sm btn-danger"
+                   onclick="return confirm('Are you sure you want to delete this kiosk?');">Delete</a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="text-center text-muted">No machines or kiosks found.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+@media (max-width: 768px) {
+  h2 { font-size: 1.5rem; }
+  .table-responsive { font-size: 0.9rem; }
+  .btn { padding: 5px 10px; }
+}
+</style>
+{% endblock %}

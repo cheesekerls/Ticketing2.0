@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}Admin Dashboard{% endblock %}</title>
 
-  <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -17,6 +16,7 @@
       display: flex;
       min-height: 100vh;
       background-color: #f5f6fa;
+      transition: background 0.3s, color 0.3s;
     }
 
     /* Sidebar */
@@ -27,37 +27,14 @@
       display: flex;
       flex-direction: column;
       padding: 25px 20px;
-      transition: all 0.3s;
+      position: relative;
     }
-
-    .sidebar h2 {
-      font-size: 1.6rem;
-      font-weight: 700;
-      text-align: center;
-      margin-bottom: 25px;
-      letter-spacing: 1px;
-    }
-
-    .sidebar .logo-container {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 30px;
-    }
-
-    .sidebar .logo-container img {
-      width: 90px;
-      max-width: 100%;
-      height: auto;
-      cursor: pointer;
-      transition: transform 0.3s, width 0.3s;
-    }
-
-    .sidebar .logo-container img:hover {
-      transform: scale(1.1);
-    }
-
+    .sidebar h2 { font-size: 1.6rem; font-weight: 700; text-align: center; margin-bottom: 25px; color: white; }
+    .sidebar .logo-container { display: flex; justify-content: center; margin-bottom: 30px; }
+    .sidebar .logo-container img { width: 90px; max-width: 100%; height: auto; cursor: pointer; transition: transform 0.3s; }
+    .sidebar .logo-container img:hover { transform: scale(1.1); }
     .sidebar a {
-      color: #ffffff;
+      color: white;
       text-decoration: none;
       padding: 12px 15px;
       border-radius: 8px;
@@ -66,13 +43,9 @@
       align-items: center;
       gap: 10px;
       font-weight: 500;
-      transition: background 0.3s, transform 0.2s;
+      transition: background 0.3s, color 0.3s;
     }
-
-    .sidebar a:hover {
-      background: rgba(255, 255, 255, 0.15);
-      transform: translateX(5px);
-    }
+    .sidebar a.active { font-weight: 700; }
 
     /* Navbar */
     .navbar-custom {
@@ -80,77 +53,58 @@
       box-shadow: 0 3px 10px rgba(0,0,0,0.1);
       padding: 12px 25px;
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-end;
       align-items: center;
+      gap: 1rem;
     }
 
-    .navbar-custom .welcome {
-      font-size: 1.3rem;
-      font-weight: 600;
-      color: #1e3a5f;
-    }
-
-    .btn-settings {
+    /* Consistent logout/admin button */
+    .navbar-custom .dropdown-toggle {
       background-color: #1e3a5f;
       color: white;
       border: none;
       padding: 8px 18px;
-      border-radius: 6px;
-      cursor: pointer;
+      border-radius: 25px;
       font-weight: 500;
+      transition: background 0.3s;
     }
-
-    .btn-settings:hover {
-      background-color: #153153;
+    .navbar-custom .dropdown-toggle:hover {
+      background-color: #162c46;
     }
 
     /* Main Content */
-    .main-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-
-    .content-wrapper {
-      flex: 1;
-      padding: 30px 40px;
-      overflow-y: auto;
-    }
+    .main-content { flex:1; display:flex; flex-direction:column; min-height:100vh; }
+    .content-wrapper { flex:1; padding:20px 30px; overflow-y:auto; }
 
     /* Dashboard cards */
     .dashboard-card {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-      flex: 1;
-      min-width: 220px;
-      margin: 10px;
-      transition: transform 0.2s, box-shadow 0.2s;
-      cursor: pointer;
+      background:white;
+      border-radius:12px;
+      padding:20px;
+      box-shadow:0 6px 15px rgba(0,0,0,0.1);
+      flex:1;
+      min-width:220px;
+      margin:10px;
+      transition: transform 0.2s;
+      cursor:pointer;
     }
-
     .dashboard-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+      transform: translateY(-2px);
+      box-shadow:0 8px 20px rgba(0,0,0,0.12);
     }
+    .dashboard-cards-container { display:flex; flex-wrap:wrap; margin-top:20px; }
 
-    .dashboard-cards-container {
-      display: flex;
-      flex-wrap: wrap;
-      margin-top: 20px;
-    }
+    /* Table */
+    .table-container { margin-top:30px; background:white; padding:15px 20px; border-radius:12px; box-shadow:0 6px 15px rgba(0,0,0,0.1); overflow-x:auto; }
+    .table-container table { width:100%; cursor:pointer; }
+    th.sortable:hover { background-color: rgba(0,0,0,0.05); }
 
-    @media (max-width: 768px) {
-      .sidebar {
-        width: 70px;
-        padding: 20px 10px;
-      }
-      .sidebar h2 { display: none; }
-      .sidebar a { justify-content: center; gap: 0; font-size: 0; }
-      .sidebar a::before { content: attr(data-icon); font-size: 1.3rem; display: inline-block; }
-      .dashboard-cards-container { flex-direction: column; }
+    @media (max-width:768px){
+      .sidebar { width:70px; padding:20px 10px; }
+      .sidebar h2 { display:none; }
+      .sidebar a { justify-content:center; gap:0; font-size:0; }
+      .sidebar a::before { content: attr(data-icon); font-size:1.3rem; display:inline-block; }
+      .dashboard-cards-container { flex-direction:column; }
     }
   </style>
 </head>
@@ -160,75 +114,126 @@
   <div class="sidebar">
       <h2>Admin Panel</h2>
       <div class="logo-container">
-          <a href="/admin-panel/">
+          <a href="/admin_dashboard/">
               <img src="{% static 'images/logo1.png' %}" alt="Logo">
           </a>
       </div>
-    <a href="{% url 'service_list' %}" data-icon="🏢">Services</a>
-    <a href="{% url 'counter_list' %}" data-icon="👨‍💼">Users</a>
-    <a href="{% url 'report_dashboard' %}" data-icon="📊">Reports</a>
+
+      <a href="{% url 'department_list' %}" data-icon="🏢" class="{% if request.resolver_match.url_name|default:'' == 'department_list' %}active{% endif %}">Departments</a>
+      <a href="{% url 'moderator_list' %}" data-icon="👨‍💼" class="{% if request.resolver_match.url_name|default:'' == 'moderator_list' %}active{% endif %}">Moderators</a>
+      <a href="{% url 'machine_kiosk' %}" data-icon="🛠️" class="{% if request.resolver_match.url_name|default:'' == 'machine_kiosk' %}active{% endif %}">Machine</a>
   </div>
 
   <!-- Main content -->
   <div class="main-content">
-      <!-- Navbar -->
-      <div class="navbar-custom">
-          <span class="welcome">Welcome, Admin</span>
+    <!-- Navbar -->
+    <div class="navbar-custom">
+        <div class="dropdown">
+            <button class="dropdown-toggle" type="button" id="adminDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                {{ request.user.get_username|default:"Admin" }}
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="adminDropdown">
+                <li>
+                    <form id="logoutForm" action="{% url 'logout' %}" method="post" class="m-0">
+                        {% csrf_token %}
+                        <button type="submit" id="logoutBtn" class="dropdown-item">Logout</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
 
-          <div class="dropdown">
-              <button class="btn-settings dropdown-toggle" type="button" id="settingsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                  Settings
-              </button>
-              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="settingsDropdown">
-                  <li><a class="dropdown-item" href="{% url 'change_password' %}">Change Password</a></li>
-                  <li><hr class="dropdown-divider"></li>
-                  <li><a class="dropdown-item" href="#" id="dropdownLogout">Logout</a></li>
-              </ul>
-          </div>
+    <!-- Content area -->
+    <div class="content-wrapper">
+        {% block content %}
+        <!-- Dashboard cards -->
+        <div class="dashboard-cards-container">
+            <div class="dashboard-card">
+                <h5>Total Departments</h5>
+                <p style="font-size:2rem;font-weight:bold;">{{ total_departments }}</p>
+            </div>
+            <div class="dashboard-card">
+                <h5>Total Moderators</h5>
+                <p style="font-size:2rem;font-weight:bold;">{{ total_moderators }}</p>
+            </div>
+        </div>
 
-          <!-- Hidden logout form -->
-          <form id="logoutForm" action="{% url 'logout' %}" method="post" style="display:none;">
-              {% csrf_token %}
-          </form>
-      </div>
-
-      <!-- Content area -->
-      <div class="content-wrapper">
-          {% block content %}
-          <div class="dashboard-cards-container">
-              <div class="dashboard-card">
-                  <h5>Total Services</h5>
-                  <p style="font-size: 2rem; font-weight: bold;">{{ total_services }}</p>
-              </div>
-              <div class="dashboard-card">
-                  <h5>Total Users</h5>
-                  <p style="font-size: 2rem; font-weight: bold;">{{ total_users }}</p>
-              </div>
-          </div>
-          {% endblock %}
-      </div>
+        <!-- Table example -->
+        <div class="table-container">
+            <table class="table table-striped" id="moderatorTable">
+                <thead>
+                    <tr>
+                        <th class="sortable">ID</th>
+                        <th class="sortable">Name</th>
+                        <th class="sortable">Email</th>
+                        <th class="sortable">Department</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for moderator in moderators %}
+                    <tr>
+                        <td>{{ moderator.employee_id }}</td>
+                        <td>{{ moderator.name }}</td>
+                        <td>{{ moderator.email }}</td>
+                        <td>{{ moderator.department.department_name }} ({{ moderator.department.prefix }})</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center">No Moderators found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endblock %}
+    </div>
   </div>
 
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
   <script>
-    // Logout from dropdown
-    document.getElementById("dropdownLogout").addEventListener("click", function(e) {
+    // Logout confirmation
+    document.getElementById("logoutBtn").addEventListener("click", function(e){
         e.preventDefault();
         Swal.fire({
-            title: "Are you sure you want to logout?",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonText: "Yes, logout",
-            cancelButtonText: "Cancel",
-            reverseButtons: true,
-            background: '#f5f6fa'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                document.getElementById("logoutForm").submit();
+            title:"Are you sure you want to logout?",
+            icon:"warning",
+            showCancelButton:true,
+            confirmButtonText:"Yes, logout",
+            cancelButtonText:"Cancel",
+            reverseButtons:true,
+            background: '#f5f6fa',
+            color: '#000'
+        }).then((result)=>{
+            if(result.isConfirmed){ 
+                document.getElementById("logoutForm").submit(); 
             }
         });
     });
+
+    // Refactored sortable table
+    function makeTableSortable(tableId) {
+        const table = document.getElementById(tableId);
+        const getCellValue = (tr, idx) => tr.children[idx].innerText || tr.children[idx].textContent;
+
+        const comparer = (idx, asc) => (a,b)=>
+            ((v1,v2)=>
+                v1!=='' && v2!=='' && !isNaN(v1) && !isNaN(v2) ? v1-v2 : v1.toString().localeCompare(v2)
+            )(getCellValue(asc?a:b, idx), getCellValue(asc?b:a, idx));
+
+        table.querySelectorAll('th.sortable').forEach(th => {
+            th.addEventListener('click', () => {
+                const tbody = table.querySelector('tbody');
+                Array.from(tbody.querySelectorAll('tr'))
+                    .sort(comparer(Array.from(th.parentNode.children).indexOf(th), th.asc = !th.asc))
+                    .forEach(tr => tbody.appendChild(tr));
+            });
+        });
+    }
+
+    makeTableSortable("moderatorTable");
   </script>
 
 </body>
