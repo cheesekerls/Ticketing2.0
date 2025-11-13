@@ -46,6 +46,7 @@ from django.http import JsonResponse
 from django.db import transaction
 from django.utils.crypto import get_random_string
 import urllib.parse
+from django.http import JsonResponse
 
 
 User = get_user_model()
@@ -835,3 +836,20 @@ def password_reset_confirm(request, token):
         return redirect('login')
 
     return render(request, 'resetpassword/password_reset_confirm.html')
+
+#TICKET DISPLAY VIEW
+
+def ticket_display(request):
+    tickets = Ticket.objects.filter(status__in=['Waiting','Called']).order_by('queue_position', 'created_at')
+    return render(request, 'tickets_display.html', {'tickets': tickets})
+
+def tickets_api(request):
+    tickets = Ticket.objects.filter(status='Waiting').order_by('-created_at')
+    data = [
+        {
+            'ticket_number': t.ticket_number,
+            'counter_number': t.assigned_counter.counter_number if t.assigned_counter else 'N/A'
+        }
+        for t in tickets
+    ]
+    return JsonResponse(data, safe=False)

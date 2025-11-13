@@ -33,5 +33,7 @@ urlpatterns = [
     #RESET PASSWORD
     path('forgot-password/', views.password_reset_request, name='password_reset'),
     path('reset-password/<str:token>/', views.password_reset_confirm, name='password_reset_confirm'),
+    path('display/', views.ticket_display, name='ticket_display'),
+    path('api/tickets/', views.tickets_api, name='tickets_api'),
 
 ]
