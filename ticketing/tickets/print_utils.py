@@ -4,13 +4,6 @@ import qrcode
 import time
 import traceback
 
-def print_ticket_to_pos(request, service_id=None):
-    print("🟢 print_ticket_to_pos CALLED")  # confirm view is hit
-    print("Method:", request.method)
-    print("POST data:", request.POST)
-    message = None
-
-
 def print_ticket_to_pos(ticket_text, qr_data=None):
     """
     Prints ticket text and an optional QR code, centered.
@@ -18,7 +11,7 @@ def print_ticket_to_pos(ticket_text, qr_data=None):
     """
     try:
         print("🖨️ Connecting to printer...")
-        printer = Serial(devfile="COM3", baudrate=9600, timeout=1)
+        printer = Serial(devfile="COM7", baudrate=9600, timeout=1)
         time.sleep(1)
         printer.hw("INIT")
         printer.set(align='center', font='a', width=3, height=3)

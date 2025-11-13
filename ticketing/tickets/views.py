@@ -12,44 +12,44 @@ import base64
 
 
 
-# Detect kiosk by MAC address
-def get_kiosk_comp(request):
-    """
-    Automatically detect the kiosk by its MAC address.
-    """
-    # This can be from a request header, or a hidden field in the kiosk browser
-    # Example: the kiosk sends X-KIOSK-MAC header
-    mac_address = request.headers.get('X-KIOSK-MAC')  # sent by kiosk browser
-    if not mac_address:
-        # fallback: manually configured MAC for testing
-        mac_address = request.GET.get('mac_address', '').strip()
+# # Detect kiosk by MAC address
+# def get_kiosk_comp(request):
+#     """
+#     Automatically detect the kiosk by its MAC address.
+#     """
+#     # This can be from a request header, or a hidden field in the kiosk browser
+#     # Example: the kiosk sends X-KIOSK-MAC header
+#     mac_address = request.headers.get('X-KIOSK-MAC')  # sent by kiosk browser
+#     if not mac_address:
+#         # fallback: manually configured MAC for testing
+#         mac_address = request.GET.get('mac_address', '').strip()
 
-    try:
-        comp = CompServices.objects.get(mac_address=mac_address)
-    except CompServices.DoesNotExist:
-        comp = None
-    return comp
+#     try:
+#         comp = CompServices.objects.get(mac_address=mac_address)
+#     except CompServices.DoesNotExist:
+#         comp = None
+#     return comp
 
-def kiosk_home(request):
-    """
-    Show services available for this kiosk automatically.
-    """
-    comp = get_kiosk_comp(request)
-    if not comp:
-        return render(request, 'tickets/kiosk.html', {
-            'services': [],
-            'comp': None,
-            'error': 'Kiosk MAC not recognized. Please register this machine.'
-        })
+# def kiosk_home(request):
+#     """
+#     Show services available for this kiosk automatically.
+#     """
+#     comp = get_kiosk_comp(request)
+#     if not comp:
+#         return render(request, 'tickets/kiosk.html', {
+#             'services': [],
+#             'comp': None,
+#             'error': 'Kiosk MAC not recognized. Please register this machine.'
+#         })
 
-    services = Service.objects.filter(department=comp.department)
-    return render(request, 'tickets/kiosk.html', {
-        'services': services,
-        'comp': comp
-    })
+#     services = Service.objects.filter(department=comp.department)
+#     return render(request, 'tickets/kiosk.html', {
+#         'services': services,
+#         'comp': comp
+#     })
 
 def print_ticket_to_pos(request, service_id=None):
-    message = None  
+    message = None  # feedback message
 
     if request.method == 'POST':
         try:
@@ -63,7 +63,7 @@ def print_ticket_to_pos(request, service_id=None):
                 service = Service.objects.first()
 
             if not service:
-                return render(request, 'tickets/kiosk.html', {
+                return render(request, 'tickets/create_ticket.html', {
                     'error': 'No service defined. Please create a Service first.'
                 })
 
@@ -82,26 +82,14 @@ def print_ticket_to_pos(request, service_id=None):
             # ✅ Ticket number with lane prefix (R or P)
             ticket_number = f"{service.service_name[:3].upper()}-{lane[:1]}{next_position:03d}"
 
-            # ✅ Assign ticket to least busy counter for this service
-            counters = service.counter_set.all()  # all counters handling this service
-            counters = counters.annotate(
-                waiting_count=models.Count(
-                    'assigned_tickets',
-                    filter=models.Q(assigned_tickets__status__in=['Waiting', 'Skipped'])
-                )
-            ).order_by('waiting_count')
-
-            assigned_counter = counters.first() if counters else None
-
             # ✅ Create the ticket
             ticket = Ticket.objects.create(
                 ticket_number=ticket_number,
                 service=service,
                 status="Waiting",
+                created_at=timezone.now(),
                 lane=lane,
-                queue_position=next_position,
-                assigned_counter=assigned_counter,  # ← assign counter
-                created_at=timezone.now()
+                queue_position=next_position  # NEW: track position in queue
             )
 
             # ✅ Ticket text
@@ -120,7 +108,7 @@ def print_ticket_to_pos(request, service_id=None):
             # ✅ Print
             try:
                 send_to_printer(ticket_text, qr_data=ticket.ticket_number)
-                message = f"{ticket.ticket_number} successfully printed!"
+                message = f" successfully printed!"
             except Exception as e:
                 message = f"Ticket created but printing failed: {e}"
 
@@ -129,10 +117,14 @@ def print_ticket_to_pos(request, service_id=None):
 
     # Always render page
     services = Service.objects.all()
-    return render(request, 'tickets/kiosk.html', {
+    return render(request, 'tickets/create_ticket.html', {
         'services': services,
         'message': message
     })
+
+
+
+
 
 def queue_status(request, ticket_number):
     ticket = get_object_or_404(Ticket, ticket_number=ticket_number)

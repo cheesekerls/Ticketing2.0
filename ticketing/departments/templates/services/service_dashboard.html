@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Services Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f9fc;
+      margin: 0;
+    }
+
+    header {
+      background-color: #123B5A;
+      color: white;
+      padding: 15px 30px;
+      font-size: 22px;
+      font-weight: bold;
+      text-align: center;
+      letter-spacing: 0.5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logout-btn {
+      background-color: #e74c3c;
+      border: none;
+      color: white;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    h2 {
+      text-align: center;
+      margin: 30px 0 20px 0;
+      color: #123B5A;
+    }
+
+    .service-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 40px;
+      padding: 20px;
+    }
+
+    .service-box {
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      width: 230px;
+      text-align: center;
+      padding: 20px;
+      background-color: #fff;
+      box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+    }
+
+    .service-box:hover {
+      transform: translateY(-5px);
+    }
+
+    .service-box h3 {
+      margin-bottom: 20px;
+      font-size: 20px;
+      color: #123B5A;
+    }
+
+    .btn {
+      display: block;
+      width: 100%;
+      margin: 8px 0;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      color: white;
+      transition: background-color 0.3s;
+    }
+
+    .btn-get {
+      background-color: #123B5A;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.4);
+    }
+
+    .modal-content {
+      background-color: #fff;
+      margin: 15% auto;
+      padding: 30px;
+      border-radius: 10px;
+      width: 320px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+
+    .modal-content h3 {
+      color: #123B5A;
+      margin-bottom: 20px;
+    }
+
+    .modal-btn {
+      background-color: #123B5A;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      margin: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .modal-btn:hover {
+      opacity: 0.9;
+    }
+
+    /* Floating notice */
+    .print-notice {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #4CAF50;
+      color: white;
+      font-weight: bold;
+      padding: 20px 40px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      z-index: 2000;
+      font-size: 20px;
+      text-align: center;
+      animation: fadeInOut 3s forwards;
+    }
+
+    @keyframes fadeInOut {
+      0% { opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    {% if counter.department %}
+      {{ counter.department.department_name }} Department
+    {% else %}
+      Services Dashboard
+    {% endif %}
+    <form method="POST" action="{% url 'logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="logout-btn">Logout</button>
+    </form>
+  </header>
+
+  {% if not services %}
+    <div style="text-align:center; margin-top:50px; font-weight:bold; color:red;">
+      No services available for this counter.
+    </div>
+  {% endif %}
+
+  {% if services %}
+    <h2>Select a Service</h2>
+  {% endif %}
+
+  <div class="service-container">
+    {% for s in services %}
+      <div class="service-box">
+        <h3>{{ s.service_name }}</h3>
+        <button class="btn btn-get" onclick="openModal('{{ s.id }}')">Get Ticket</button>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Modal Popup -->
+  <div id="ticketModal" class="modal">
+    <div class="modal-content">
+      <h3>Select Ticket Type</h3>
+      <form id="ticketForm" method="post">
+        {% csrf_token %}
+        <input type="hidden" id="serviceIdField" name="service_id">
+        <input type="hidden" id="ticketTypeField" name="ticket_type">
+        <button type="button" class="modal-btn" onclick="submitTicket('Regular')">Regular</button>
+        <button type="button" class="modal-btn" onclick="submitTicket('Priority')">Priority</button>
+      </form>
+      <button type="button" class="modal-btn" style="background-color: gray;" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Success Popup -->
+  <div id="print-notice" class="print-notice">
+    Ticket successfully printed!
+  </div>
+
+  <script>
+    let selectedServiceId = null;
+
+    function openModal(serviceId) {
+      selectedServiceId = serviceId;
+      document.getElementById('ticketModal').style.display = 'block';
+    }
+
+    function closeModal() {
+      document.getElementById('ticketModal').style.display = 'none';
+    }
+
+    function submitTicket(type) {
+      const form = document.getElementById('ticketForm');
+      const serviceIdField = document.getElementById('serviceIdField');
+      const ticketTypeField = document.getElementById('ticketTypeField');
+
+      serviceIdField.value = selectedServiceId;
+      ticketTypeField.value = type;
+
+      // Backend URL (adjust your route)
+      form.action = `/tickets/print_ticket_to_pos/${selectedServiceId}/`;
+
+      // Submit form
+      form.submit();
+
+      // Show popup after 2 seconds and refresh
+      setTimeout(() => {
+        const notice = document.getElementById('print-notice');
+        notice.style.display = 'block';
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      }, 2000);
+    }
+
+    window.onclick = function(event) {
+      const modal = document.getElementById('ticketModal');
+      if (event.target === modal) {
+        modal.style.display = 'none';
+      }
+    };
+  </script>
+
+</body>
+</html>

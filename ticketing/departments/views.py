@@ -45,6 +45,7 @@ def add_department(request):
 
     # Render the form template with errors if any
     return render(request, "add_department.html", {"form": form})
+
 @login_required
 @role_required('Admin')
 def check_department_name(request):
@@ -233,80 +234,80 @@ def check_service_duplicate(request):
 
 
 
-@login_required
-@role_required('Admin')
-def machine_kiosk_view(request):
-    """
-    Display all kiosks and handle adding a new kiosk via form.
-    """
-    kiosks = CompServices.objects.select_related('department').all()
+# @login_required
+# @role_required('Admin')
+# def machine_kiosk_view(request):
+#     """
+#     Display all kiosks and handle adding a new kiosk via form.
+#     """
+#     kiosks = CompServices.objects.select_related('department').all()
 
-    if request.method == "POST":
-        form = CompServicesForm(request.POST)
-        if form.is_valid():
-            # ✅ Cleaned data
-            mac_address = form.cleaned_data['mac_address']
-            role = form.cleaned_data['role']
-            department = form.cleaned_data['department']
+#     if request.method == "POST":
+#         form = CompServicesForm(request.POST)
+#         if form.is_valid():
+#             # ✅ Cleaned data
+#             mac_address = form.cleaned_data['mac_address']
+#             role = form.cleaned_data['role']
+#             department = form.cleaned_data['department']
 
-            # ✅ Ensure no duplicate MAC
-            if CompServices.objects.filter(mac_address=mac_address).exists():
-                messages.error(request, f"Kiosk with MAC {mac_address} already exists.")
-            else:
-                CompServices.objects.create(
-                    mac_address=mac_address,
-                    role=role,
-                    department=department
-                )
-                messages.success(request, "Machine/Kiosk added successfully!")
-                return redirect('machine_kiosk')
-        else:
-            messages.error(request, "Please correct the errors below.")
-    else:
-        form = CompServicesForm()
+#             # ✅ Ensure no duplicate MAC
+#             if CompServices.objects.filter(mac_address=mac_address).exists():
+#                 messages.error(request, f"Kiosk with MAC {mac_address} already exists.")
+#             else:
+#                 CompServices.objects.create(
+#                     mac_address=mac_address,
+#                     role=role,
+#                     department=department
+#                 )
+#                 messages.success(request, "Machine/Kiosk added successfully!")
+#                 return redirect('machine_kiosk')
+#         else:
+#             messages.error(request, "Please correct the errors below.")
+#     else:
+#         form = CompServicesForm()
 
-    context = {
-        'form': form,
-        'kiosks': kiosks
-    }
-    return render(request, 'machine/machine_kiosk.html', context)
+#     context = {
+#         'form': form,
+#         'kiosks': kiosks
+#     }
+#     return render(request, 'machine/machine_kiosk.html', context)
 
 
-@login_required
-@role_required('Admin')
-def update_kiosk(request, comp_id):
-    kiosk = get_object_or_404(CompServices, comp_id=comp_id)
+# @login_required
+# @role_required('Admin')
+# def update_kiosk(request, comp_id):
+#     kiosk = get_object_or_404(CompServices, comp_id=comp_id)
 
-    if request.method == "POST":
-        mac_address = request.POST.get('mac_address', '').strip()
-        role = request.POST.get('role', '').strip()
+#     if request.method == "POST":
+#         mac_address = request.POST.get('mac_address', '').strip()
+#         role = request.POST.get('role', '').strip()
 
-        if not mac_address or not role:
-            messages.error(request, "MAC Address and Role are required.")
-            return redirect('machine_kiosk')
+#         if not mac_address or not role:
+#             messages.error(request, "MAC Address and Role are required.")
+#             return redirect('machine_kiosk')
 
-        # Prevent duplicate MAC for other kiosks
-        if CompServices.objects.exclude(comp_id=kiosk.comp_id).filter(mac_address=mac_address).exists():
-            messages.error(request, f"MAC {mac_address} is already used by another kiosk.")
-            return redirect('machine_kiosk')
+#         # Prevent duplicate MAC for other kiosks
+#         if CompServices.objects.exclude(comp_id=kiosk.comp_id).filter(mac_address=mac_address).exists():
+#             messages.error(request, f"MAC {mac_address} is already used by another kiosk.")
+#             return redirect('machine_kiosk')
 
-        try:
-            kiosk.mac_address = mac_address
-            kiosk.role = role
-            # department remains unchanged
-            kiosk.save()
-            messages.success(request, "Machine/Kiosk updated successfully!")
-        except Exception as e:
-            messages.error(request, f"Error updating kiosk: {e}")
+#         try:
+#             kiosk.mac_address = mac_address
+#             kiosk.role = role
+#             # department remains unchanged
+#             kiosk.save()
+#             messages.success(request, "Machine/Kiosk updated successfully!")
+#         except Exception as e:
+#             messages.error(request, f"Error updating kiosk: {e}")
 
-    return redirect('machine_kiosk')
-@login_required
-@role_required('Admin')
-def delete_kiosk(request, comp_id):
-    """
-    Delete a kiosk safely.
-    """
-    kiosk = get_object_or_404(CompServices, pk=comp_id)
-    kiosk.delete()
-    messages.success(request, "Machine/Kiosk deleted successfully!")
-    return redirect('machine_kiosk')
+#     return redirect('machine_kiosk')
+# @login_required
+# @role_required('Admin')
+# def delete_kiosk(request, comp_id):
+#     """
+#     Delete a kiosk safely.
+#     """
+#     kiosk = get_object_or_404(CompServices, pk=comp_id)
+#     kiosk.delete()
+#     messages.success(request, "Machine/Kiosk deleted successfully!")
+#     return redirect('machine_kiosk')

@@ -47,6 +47,7 @@ from django.db import transaction
 from django.utils.crypto import get_random_string
 import urllib.parse
 
+
 User = get_user_model()
 
 
@@ -111,7 +112,12 @@ def universal_login(request):
                 request.session["counter_id"] = counter.counter_id
                 request.session["email"] = counter.email
                 messages.success(request, f"Welcome, Counter {counter.counter_number}!")
-                return redirect("counter_dashboard")
+
+                # ✅ Redirect Counter #0 → services_dashboard; others → counter_dashboard
+                if str(counter.counter_number) == "0":
+                    return redirect("services_dashboard")
+                else:
+                    return redirect("counter_dashboard")
 
         # ========== ❌ NO MATCH ==========
         messages.error(request, "Invalid username/email or password.")
@@ -422,6 +428,7 @@ def add_counter(request):
         counter_number = request.POST.get('counter_number')
         selected_services = request.POST.getlist('services')
 
+
         # ✅ Generate secure password setup token
         token = secrets.token_urlsafe(32)
 
@@ -457,10 +464,11 @@ def add_counter(request):
         messages.success(request, f"Counter '{name}' invited! A password setup email has been sent.")
         return redirect('counter_list')
 
+
     return render(request, 'counter/add_counter.html', {
         'services': available_services,
         'department_name': dept.department_name,
-    })
+          })
 
 def setpassword_counter(request, token):
     """Counter sets password after invitation."""
@@ -510,9 +518,31 @@ def assign_next_ticket_auto():
             counter.status = 'Serving'
             counter.save()
 
-# ------------------------------
-# Views
-# ------------------------------
+
+def services_dashboard(request):
+    # ✅ Check if a counter is logged in
+    counter_id = request.session.get("counter_id")
+    if not counter_id:
+        messages.error(request, "You must be logged in to access this page.")
+        return redirect("login")
+
+    # ✅ Fetch the counter object
+    counter = get_object_or_404(Counter, pk=counter_id)
+
+    # ✅ Restrict access to Counter #0 only
+    if str(counter.counter_number) != "0":
+        messages.warning(request, "You are not authorized to view this dashboard.")
+        return redirect("counter_dashboard")
+
+    # ✅ You can pass any data related to services or queues here
+    # Example: show all services assigned to this counter’s department
+    services = counter.department.service_set.all() if counter.department else []
+
+    # ✅ Render services_dashboard.html
+    return render(request, "services/service_dashboard.html", {
+        "counter": counter,
+        "services": services,
+    })
 @role_required('Counter')
 def counter_dashboard(request):
     counter = get_current_counter(request)
@@ -520,24 +550,30 @@ def counter_dashboard(request):
         messages.error(request, "Counter not found.")
         return redirect("login")
 
+    # Get services assigned to this counter
     assigned_services = counter.services.all()
 
-    # Update queue positions
+    # --- Update queue positions ---
+    # Only for tickets in assigned services that are still waiting or skipped
     waiting_tickets = Ticket.objects.filter(
         service__in=assigned_services,
         status__in=['Waiting', 'Skipped']
     ).order_by('created_at')
 
+    # Assign queue positions if not set
     for idx, t in enumerate(waiting_tickets, start=1):
         if not t.queue_position:
             t.queue_position = idx
             t.save()
 
+    # --- Tickets for this counter ---
+    # Show all tickets for the assigned services
     tickets = Ticket.objects.filter(
-        assigned_counter=counter,
+        service__in=assigned_services,
         status__in=['Waiting', 'Called', 'Skipped']
     ).order_by('queue_position')
 
+    # --- Current ticket being served ---
     current_ticket = tickets.filter(status='Called').last()
 
     return render(request, 'counter/counter_dashboard.html', {
@@ -557,10 +593,9 @@ def call_next_ticket(request):
         messages.error(request, "Counter not found.")
         return redirect("login")
 
-    # Only tickets assigned to this counter
     assigned_services = counter.services.all()
 
-    # Mark current ticket as Served (for this counter)
+    # --- Mark current ticket as Served ---
     current_ticket = Ticket.objects.filter(
         assigned_counter=counter,
         status='Called'
@@ -569,14 +604,16 @@ def call_next_ticket(request):
         current_ticket.status = 'Served'
         current_ticket.save()
 
-    # Call next waiting ticket (only for this counter)
+    # --- Call next waiting ticket ---
     next_ticket = Ticket.objects.filter(
-        assigned_counter=counter,
+        service__in=assigned_services,
         status='Waiting'
     ).order_by('queue_position').first()
 
     if next_ticket:
+        # Assign to this counter and update status
         next_ticket.status = 'Called'
+        next_ticket.assigned_counter = counter
         next_ticket.save()
         messages.success(request, f"Now serving ticket {next_ticket.ticket_number}")
     else:
@@ -597,19 +634,23 @@ def skip_ticket(request, ticket_number):
         messages.error(request, "Ticket not found or not in your assigned services.")
         return redirect("counter_dashboard")
 
+    # Mark the ticket as Skipped
     ticket.status = 'Skipped'
     ticket.save()
 
+    # Get all waiting or skipped tickets for this counter's services, ordered by queue_position
     waiting_tickets = list(Ticket.objects.filter(
         service__in=assigned_services,
         status__in=['Waiting', 'Skipped']
     ).order_by('queue_position'))
 
-    if len(waiting_tickets) >= 3:
-        waiting_tickets.insert(2, waiting_tickets.pop(waiting_tickets.index(ticket)))
-    elif len(waiting_tickets) > 0:
-        waiting_tickets.append(waiting_tickets.pop(waiting_tickets.index(ticket)))
+    if ticket in waiting_tickets:
+        waiting_tickets.remove(ticket)
+        # Insert skipped ticket into 3rd position if possible
+        insert_index = min(2, len(waiting_tickets))  # 2 = third position (0-based)
+        waiting_tickets.insert(insert_index, ticket)
 
+    # Reassign queue positions sequentially
     for idx, t in enumerate(waiting_tickets, start=1):
         if t.queue_position != idx:
             t.queue_position = idx
@@ -619,9 +660,17 @@ def skip_ticket(request, ticket_number):
     counter.save()
     assign_next_ticket_auto()
 
-    messages.success(request, f"Ticket {ticket.ticket_number} skipped and moved in queue.")
+    messages.success(request, f"Ticket {ticket.ticket_number} skipped and moved to 3rd position.")
     return redirect("counter_dashboard")
 
+@role_required('Counter')
+def back_to_queue(request, ticket_number):
+    ticket = get_object_or_404(Ticket, ticket_number=ticket_number)
+    ticket.status = "Waiting"
+    ticket.assigned_counter = None
+    ticket.save()
+    assign_next_ticket_auto()
+    return redirect('counter_dashboard')
 
 @role_required('Counter')
 def cancel_ticket(request, ticket_number):
@@ -635,15 +684,6 @@ def cancel_ticket(request, ticket_number):
             return JsonResponse({'success': False, 'error': 'Ticket not found'})
     return JsonResponse({'success': False, 'error': 'Invalid request'})
 
-
-@role_required('Counter')
-def back_to_queue(request, ticket_number):
-    ticket = get_object_or_404(Ticket, ticket_number=ticket_number)
-    ticket.status = "Waiting"
-    ticket.assigned_counter = None
-    ticket.save()
-    assign_next_ticket_auto()
-    return redirect('counter_dashboard')
 
 # views.py
 from django.shortcuts import render, redirect, get_object_or_404

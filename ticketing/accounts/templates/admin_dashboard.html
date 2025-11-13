@@ -121,7 +121,7 @@
 
       <a href="{% url 'department_list' %}" data-icon="🏢" class="{% if request.resolver_match.url_name|default:'' == 'department_list' %}active{% endif %}">Departments</a>
       <a href="{% url 'moderator_list' %}" data-icon="👨‍💼" class="{% if request.resolver_match.url_name|default:'' == 'moderator_list' %}active{% endif %}">Moderators</a>
-      <a href="{% url 'machine_kiosk' %}" data-icon="🛠️" class="{% if request.resolver_match.url_name|default:'' == 'machine_kiosk' %}active{% endif %}">Machine</a>
+      {% comment %} <a href="{% url 'machine_kiosk' %}" data-icon="🛠️" class="{% if request.resolver_match.url_name|default:'' == 'machine_kiosk' %}active{% endif %}">Machine</a> {% endcomment %}
   </div>
 
   <!-- Main content -->

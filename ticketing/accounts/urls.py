@@ -27,6 +27,9 @@ urlpatterns = [
     path('counter/edit/<int:counter_id>/', views.edit_counter, name='edit_counter'),
     path('counter/delete/<int:counter_id>/', views.delete_counter, name='delete_counter'),
     path('counter/set-password/<str:token>/', views.setpassword_counter, name='setpassword_counter'),
+    path('counter/services_dashboard/', views.services_dashboard, name='services_dashboard'),
+
+    # path('machine-kiosk/add/', views.service_dashboard, name='add_kiosk'),
     #RESET PASSWORD
     path('forgot-password/', views.password_reset_request, name='password_reset'),
     path('reset-password/<str:token>/', views.password_reset_confirm, name='password_reset_confirm'),
