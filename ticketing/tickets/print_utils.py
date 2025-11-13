@@ -5,12 +5,6 @@ import time
 import traceback
 
 
-def print_ticket_to_pos(request, service_id=None):
-    print("🟢 print_ticket_to_pos CALLED")  # confirm view is hit
-    print("Method:", request.method)
-    print("POST data:", request.POST)
-    message = None
-
 
 def print_ticket_to_pos(ticket_text, qr_data=None):
     """
