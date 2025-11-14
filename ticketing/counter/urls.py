@@ -10,4 +10,7 @@ urlpatterns = [
     path('cancel_ticket/<str:ticket_number>/', views.cancel_ticket, name='cancel_ticket'),
     path('counter/edit/<int:counter_id>/', views.edit_counter, name='edit_counter'),
     path('counter/delete/<int:counter_id>/', views.delete_counter, name='delete_counter'),
+     path('back_to_queue/<str:ticket_number>/', views.back_to_queue, name='back_to_queue'),
+
 ]
+

@@ -63,4 +63,4 @@ class ChangePasswordForm(forms.Form):
         if new_password1 and new_password2 and new_password1 != new_password2:
             raise forms.ValidationError("New passwords do not match.")
         password_validation.validate_password(new_password1, self.admin_user)
-        return cleaned_data
+

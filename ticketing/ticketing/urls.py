@@ -32,7 +32,10 @@ urlpatterns = [
     path('accounts/', include('django.contrib.auth.urls')), 
     path('counter/', include('counter.urls')),
     path('user/', include('user.urls')),
+<<<<<<< HEAD
 
     # Optional: redirect root to accounts page
+=======
+>>>>>>> f7ab577c541ae732dae46b59b650735189afc0be
     path('', include('accounts.urls')),
 ]

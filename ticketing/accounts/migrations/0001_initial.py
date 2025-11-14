@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 
+=======
+>>>>>>> f7ab577c541ae732dae46b59b650735189afc0be
 import django.db.models.deletion
 from django.conf import settings
 from django.db import migrations, models
@@ -15,7 +18,38 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        # ✅ COUNTER MODEL
         migrations.CreateModel(
+<<<<<<< HEAD
+=======
+            name='Counter',
+            fields=[
+                ('counter_id', models.AutoField(primary_key=True, serialize=False)),
+                ('counter_number', models.CharField(max_length=100)),
+                ('department', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    related_name='accounts_counters',
+                    to='departments.department'
+                )),
+                ('service', models.ForeignKey(
+                    blank=True,
+                    db_column='service_id',
+                    null=True,
+                    on_delete=django.db.models.deletion.CASCADE,
+                    related_name='accounts_counters_services',
+                    to='services.service'
+                )),
+                ('ticket', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    related_name='accounts_counters_tickets',
+                    to='tickets.ticket'
+                )),
+            ],
+        ),
+
+        # ✅ EMPLOYEE MODEL
+        migrations.CreateModel(
+>>>>>>> f7ab577c541ae732dae46b59b650735189afc0be
             name='Employee',
             fields=[
                 ('employee_id', models.AutoField(primary_key=True, serialize=False)),
@@ -25,37 +59,87 @@ class Migration(migrations.Migration):
                 ('password', models.CharField(blank=True, max_length=255, null=True)),
                 ('password_reset_token', models.CharField(blank=True, max_length=255, null=True)),
                 ('is_active', models.BooleanField(default=True)),
-                ('department', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='departments.department')),
+                ('department', models.ForeignKey(
+                    null=True,
+                    on_delete=django.db.models.deletion.CASCADE,
+                    to='departments.department'
+                )),
             ],
         ),
+
+        # ✅ AUTHUSER MODEL
         migrations.CreateModel(
             name='AuthUser',
             fields=[
                 ('user_id', models.AutoField(primary_key=True, serialize=False)),
-                ('department', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='departments.department')),
-                ('employee', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='accounts.employee')),
+                ('department', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    to='departments.department'
+                )),
+                ('employee', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    to='accounts.employee'
+                )),
             ],
         ),
+
+        # ✅ LOG MODEL
         migrations.CreateModel(
             name='Log',
             fields=[
                 ('log_id', models.AutoField(primary_key=True, serialize=False)),
-                ('employee', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='accounts.employee')),
-                ('ticket', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='tickets.ticket')),
+                ('employee', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    to='accounts.employee'
+                )),
+                ('ticket', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    to='tickets.ticket'
+                )),
             ],
         ),
+
+        # ✅ USERPROFILE MODEL
         migrations.CreateModel(
             name='UserProfile',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('role', models.CharField(choices=[('moderator', 'Moderator'), ('admin', 'Admin'), ('staff', 'Staff')], default='moderator', max_length=10)),
-                ('department', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='departments.department')),
-                ('employee', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='accounts.employee')),
-                ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='userprofile', to=settings.AUTH_USER_MODEL)),
+                ('role', models.CharField(
+                    choices=[
+                        ('moderator', 'Moderator'),
+                        ('admin', 'Admin'),
+                        ('staff', 'Staff')
+                    ],
+                    default='moderator',
+                    max_length=10
+                )),
+                ('department', models.ForeignKey(
+                    blank=True,
+                    null=True,
+                    on_delete=django.db.models.deletion.SET_NULL,
+                    to='departments.department'
+                )),
+                ('employee', models.ForeignKey(
+                    blank=True,
+                    null=True,
+                    on_delete=django.db.models.deletion.SET_NULL,
+                    to='accounts.employee'
+                )),
+                ('user', models.OneToOneField(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    related_name='userprofile',
+                    to=settings.AUTH_USER_MODEL
+                )),
             ],
         ),
+
+        # ✅ UNIQUE CONSTRAINT ON EMPLOYEE
         migrations.AddConstraint(
             model_name='employee',
-            constraint=models.UniqueConstraint(condition=models.Q(('position', 'Admin')), fields=('department',), name='unique_admin_per_department'),
+            constraint=models.UniqueConstraint(
+                fields=['department'],
+                condition=models.Q(position='Admin'),
+                name='unique_admin_per_department',
+            ),
         ),
     ]

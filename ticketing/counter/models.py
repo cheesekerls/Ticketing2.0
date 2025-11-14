@@ -29,4 +29,8 @@ class Counter(models.Model):
 
     class Meta:
         verbose_name = "Counter"
+
         verbose_name_plural = "Counters"
+
+        verbose_name_plural = "Counters"
+
