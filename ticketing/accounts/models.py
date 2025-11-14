@@ -103,10 +103,6 @@ class Log(models.Model):
         return f"{self.employee.name} - {dept_name}"
 
 
-
-
-
-
 class Counter(models.Model):
     counter_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100)
