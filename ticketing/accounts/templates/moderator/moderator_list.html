@@ -1,0 +1,174 @@
+{% extends "admin_dashboard.html" %}
+
+{% block title %}Moderator Management{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+    <h2 class="fw-bold mb-2 mb-md-0" id="pageTitle">Moderator Management</h2>
+    <a href="{% url 'add_moderator' %}" class="btn btn-dark-blue rounded-pill px-4 py-2 shadow-sm">
+      + Add Moderator
+    </a>
+  </div>
+
+  <div class="card border-0 shadow-sm rounded-4">
+    <div class="card-body p-4">
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="bg-dark text-white rounded-top">
+            <tr>
+              <th class="text-center" style="width: 8%;">ID</th>
+              <th style="width: 28%;">Name</th>
+              <th style="width: 28%;">Email</th>
+              <th style="width: 20%;">Department</th>
+              <th class="text-center" style="width: 16%;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for emp in employees %}
+            <tr class="table-row-hover">
+              <td class="text-center fw-semibold">{{ emp.employee_id }}</td>
+              <td>{{ emp.name }}</td>
+              <td>{{ emp.email }}</td>
+              <td>{{ emp.department.department_name }}</td>
+              <td class="text-center">
+                <button class="btn btn-sm btn-outline-dark rounded-pill me-2 px-3 py-1"
+                        onclick="openEditModal('{{ emp.employee_id }}', '{{ emp.name }}', '{{ emp.email }}', '{{ emp.department.department_name }}')">
+                  Edit
+                </button>
+                <button class="btn btn-sm btn-outline-danger rounded-pill px-3 py-1"
+                        onclick="confirmDelete('{{ emp.employee_id }}')">
+                  Delete
+                </button>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" class="text-center text-muted py-4">No Moderators found.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow rounded-4">
+      <div class="modal-header border-0 bg-dark text-white rounded-top-4">
+        <h5 class="modal-title">Edit Moderator</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="editForm" method="post" action="{% url 'edit_moderator' %}">
+        {% csrf_token %}
+        <div class="modal-body px-4 py-3">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Name</label>
+            <input type="text" id="edit_name" name="name" class="form-control form-control-lg rounded-3" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Email</label>
+            <input type="email" id="edit_email" name="email" class="form-control form-control-lg rounded-3" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Department</label>
+            <input type="text" id="edit_department" name="department_name" class="form-control form-control-lg rounded-3" required>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pb-4">
+          <button type="submit" class="btn btn-dark-blue rounded-pill px-4 py-2">Save</button>
+          <button type="button" class="btn btn-outline-secondary rounded-pill px-4 py-2" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+function openEditModal(id, name, email, department_name) {
+  const modal = new bootstrap.Modal(document.getElementById('editModal'));
+  document.getElementById('edit_name').value = name;
+  document.getElementById('edit_email').value = email;
+  document.getElementById('edit_department').value = department_name;
+  modal.show();
+}
+
+function confirmDelete(id) {
+  Swal.fire({
+    title: 'Are you sure?',
+    text: "You won't be able to undo this.",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#1e3a5f',
+    cancelButtonColor: '#6c757d',
+    confirmButtonText: 'Yes, delete it'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      window.location.href = '/employees/delete/' + id + '/';
+    }
+  });
+}
+
+{% if messages %}
+document.addEventListener("DOMContentLoaded", function() {
+  {% for message in messages %}
+    Swal.fire({
+      icon: 'success',
+      title: '{{ message|escapejs }}',
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true
+    });
+  {% endfor %}
+});
+{% endif %}
+</script>
+
+<style>
+.table thead th {
+  border: none;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  font-size: 0.95rem;
+}
+.table tbody td {
+  vertical-align: middle;
+  color: #333;
+  font-size: 0.925rem;
+}
+.table-row-hover:hover {
+  background-color: #f8f9fa !important;
+  transition: all 0.3s ease;
+}
+.btn {
+  transition: all 0.3s ease;
+  border-radius: 50px;
+  font-size: 0.875rem;
+}
+.btn-dark-blue {
+  background-color: #1e3a5f;
+  color: white;
+  border: none;
+}
+.btn-dark-blue:hover {
+  background-color: #16314a;
+  color: white;
+}
+.modal-content {
+  animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+.form-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+</style>
+{% endblock %}

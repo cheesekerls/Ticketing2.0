@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.db.models import Count, Q
-from .models import Employee
+from .models import Counter, Employee
 
 @admin.register(Employee)
 class EmployeeAdmin(admin.ModelAdmin):
@@ -28,3 +28,9 @@ class EmployeeAdmin(admin.ModelAdmin):
         # This method doesn’t exist by default; you need a custom template if you want actual color
         # Instead, we can style via list_display and HTML if desired
         return 'background-color: #e0ffe0;' if obj.admin_count > 0 else ''
+@admin.register(Counter)
+class CounterAdmin(admin.ModelAdmin):
+    list_display = ('counter_id', 'email', 'counter_number', 'department')
+    list_filter = ('department',)
+    search_fields = ('counter_number', 'email')
+    ordering = ('department', 'counter_number')

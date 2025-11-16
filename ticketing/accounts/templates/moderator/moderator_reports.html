@@ -1,0 +1,180 @@
+{% extends "moderator/moderator_dashboard.html" %}
+{% block title %}Reports Dashboard{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:1200px; margin:auto; padding:20px;">
+
+  <!-- Header -->
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+    <h2 style="color:#0d47a1; margin:0;">Department Reports Overview</h2>
+    {% if department %}
+      <span style="background:#1565c0; color:white; padding:8px 15px; border-radius:20px; font-weight:500;">
+        📊 {{ department.department_name }}
+      </span>
+    {% else %}
+      <span style="background:#d32f2f; color:white; padding:8px 15px; border-radius:20px; font-weight:500;">
+        ⚠️ No Department Assigned
+      </span>
+    {% endif %}
+  </div>
+
+  {% if not department %}
+  <!-- Warning if no department -->
+  <div style="background:#ffebee; border-left:4px solid #d32f2f; padding:15px; margin-top:20px; border-radius:6px;">
+    <strong style="color:#c62828;">Access Restricted:</strong> 
+    <span style="color:#666;">You are not assigned to any department. Please contact the administrator.</span>
+  </div>
+  {% else %}
+
+  <!-- Summary Cards -->
+  <div class="row" style="display:flex; gap:15px; flex-wrap:wrap; justify-content:space-between; margin-top:25px;">
+    <div class="card" style="flex:1; min-width:240px; background:#0d47a1; color:white; padding:20px; border-radius:12px; text-align:center; box-shadow:0 4px 8px rgba(0,0,0,0.15);">
+      <h4 style="margin:0; font-weight:400; opacity:0.9;">📅 Today</h4>
+      <h2 style="margin:10px 0; font-size:2.5rem;">{{ today_tickets }}</h2>
+      <small style="opacity:0.8;">tickets created</small>
+    </div>
+    <div class="card" style="flex:1; min-width:240px; background:#1565c0; color:white; padding:20px; border-radius:12px; text-align:center; box-shadow:0 4px 8px rgba(0,0,0,0.15);">
+      <h4 style="margin:0; font-weight:400; opacity:0.9;">📆 This Month</h4>
+      <h2 style="margin:10px 0; font-size:2.5rem;">{{ monthly_tickets }}</h2>
+      <small style="opacity:0.8;">tickets created</small>
+    </div>
+    <div class="card" style="flex:1; min-width:240px; background:#1976d2; color:white; padding:20px; border-radius:12px; text-align:center; box-shadow:0 4px 8px rgba(0,0,0,0.15);">
+      <h4 style="margin:0; font-weight:400; opacity:0.9;">📊 This Year</h4>
+      <h2 style="margin:10px 0; font-size:2.5rem;">{{ yearly_tickets }}</h2>
+      <small style="opacity:0.8;">tickets created</small>
+    </div>
+    <div class="card" style="flex:1; min-width:240px; background:#1e88e5; color:white; padding:20px; border-radius:12px; text-align:center; box-shadow:0 4px 8px rgba(0,0,0,0.15);">
+      <h4 style="margin:0; font-weight:400; opacity:0.9;">🎫 Total Tickets</h4>
+      <h2 style="margin:10px 0; font-size:2.5rem;">{{ total_tickets }}</h2>
+      <small style="opacity:0.8;">all time</small>
+    </div>
+  </div>
+
+  <!-- Chart Section -->
+  <div style="background:white; border-radius:12px; margin-top:40px; padding:25px; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
+    <h3 style="margin-bottom:15px; color:#0d47a1;">📈 Monthly Ticket Analytics</h3>
+    <p style="color:#666; font-size:0.9rem; margin-bottom:20px;">
+      Showing data for <strong>{{ department.department_name }}</strong> department only
+    </p>
+    <canvas id="monthlyChart"></canvas>
+  </div>
+
+  <!-- Service Summary -->
+  <div style="background:white; border-radius:12px; margin-top:40px; padding:25px; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
+    <h3 style="margin-bottom:15px; color:#0d47a1;">🛠️ Tickets per Service</h3>
+    <p style="color:#666; font-size:0.9rem; margin-bottom:20px;">
+      Services handled by <strong>{{ department.department_name }}</strong>
+    </p>
+    <div style="overflow-x:auto;">
+      <table style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr style="background:#f4f6f8;">
+            <th style="padding:12px; text-align:left; color:#0d47a1; font-weight:600;">#</th>
+            <th style="padding:12px; text-align:left; color:#0d47a1; font-weight:600;">Service Name</th>
+            <th style="padding:12px; text-align:left; color:#0d47a1; font-weight:600;">Total Tickets</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in service_summary %}
+          <tr style="border-bottom:1px solid #eee;">
+            <td style="padding:10px; color:#666;">{{ forloop.counter }}</td>
+            <td style="padding:10px; font-weight:500;">{{ s.service__service_name }}</td>
+            <td style="padding:10px;">
+              <span style="background:#e3f2fd; color:#1565c0; padding:4px 12px; border-radius:12px; font-weight:600;">
+                {{ s.total }}
+              </span>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="3" style="padding:20px; text-align:center; color:#999;">
+              📭 No tickets found for this department
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% endif %}
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+{% if department and monthly_data %}
+const ctx = document.getElementById('monthlyChart').getContext('2d');
+
+// Month names for better labels
+const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const labels = [{% for m in monthly_data %}monthNames[{{ m.created_at__month }} - 1],{% endfor %}];
+const data = [{% for m in monthly_data %}{{ m.total }},{% endfor %}];
+
+const chartData = {
+  labels: labels,
+  datasets: [{
+    label: 'Tickets Created',
+    data: data,
+    backgroundColor: 'rgba(21,101,192,0.2)',
+    borderColor: '#1565c0',
+    borderWidth: 2,
+    fill: true,
+    tension: 0.4,
+    pointBackgroundColor: '#0d47a1',
+    pointBorderColor: '#fff',
+    pointBorderWidth: 2,
+    pointRadius: 5,
+    pointHoverRadius: 7
+  }]
+};
+
+new Chart(ctx, {
+  type: 'line',
+  data: chartData,
+  options: {
+    responsive: true,
+    maintainAspectRatio: true,
+    scales: {
+      x: {
+        ticks: { 
+          color: '#333',
+          font: { size: 12, weight: '500' }
+        },
+        grid: { 
+          color: '#e0e0e0',
+          display: false 
+        }
+      },
+      y: {
+        beginAtZero: true,
+        ticks: { 
+          color: '#333',
+          font: { size: 12 },
+          stepSize: 1
+        },
+        grid: { 
+          color: '#e0e0e0' 
+        }
+      }
+    },
+    plugins: {
+      legend: {
+        labels: { 
+          color: '#0d47a1', 
+          font: { size: 14, weight: '600' },
+          padding: 20
+        }
+      },
+      tooltip: {
+        backgroundColor: 'rgba(13,71,161,0.9)',
+        padding: 12,
+        titleFont: { size: 14, weight: '600' },
+        bodyFont: { size: 13 }
+      }
+    }
+  }
+});
+{% endif %}
+</script>
+{% endblock %}

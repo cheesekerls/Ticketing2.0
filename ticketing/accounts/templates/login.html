@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 
 <<<<<<< HEAD
 <form method="POST">
@@ -33,6 +34,23 @@
             font-family: 'Poppins', sans-serif;
         }
 
+=======
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+>>>>>>> counter
         body, html {
             height: 100%;
             width: 100%;
@@ -59,7 +77,11 @@
             width: 260px;
             height: auto;
             filter: drop-shadow(0 5px 15px rgba(0,0,0,0.3));
+<<<<<<< HEAD
             transform: translateX(20px); /* move logo slightly to the right */
+=======
+            transform: translateX(20px);
+>>>>>>> counter
         }
 
         /* RIGHT SIDE - LOGIN FORM */
@@ -83,7 +105,10 @@
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> counter
         .login-form h2 {
             font-size: 28px;
             font-weight: 600;
@@ -149,7 +174,11 @@
             }
 
             .logo-section img {
+<<<<<<< HEAD
                 transform: translateX(0); /* reset logo position for mobile */
+=======
+                transform: translateX(0);
+>>>>>>> counter
             }
         }
 
@@ -171,6 +200,7 @@
         </div>
 
         <div class="login-box">
+<<<<<<< HEAD
             <div class="login-form">
                 <h2>LOGIN</h2>
                 <form method="POST">
@@ -195,3 +225,32 @@
 =======
 </html>
 >>>>>>> createticket
+=======
+           <div class="login-form">
+    <h2>LOGIN</h2>
+    <form method="POST">
+        {% csrf_token %}
+        
+        <label for="email" style="display:block; text-align:left; margin-top:10px; font-weight:500;">Email:</label>
+        <input type="text" name="email" id="email" placeholder="Enter your email" required>
+        
+        <label for="password" style="display:block; text-align:left; margin-top:10px; font-weight:500;">Password:</label>
+        <input type="password" name="password" id="password" placeholder="Enter your password" required>
+        
+        <button type="submit">LOGIN</button>
+    </form>
+
+    <div style="margin-top:10px; text-align:right;">
+        <a href="{% url 'password_reset' %}" style="font-size:14px; color:#0d4770; text-decoration:none;">Forgot password?</a>
+    </div>
+
+    <!-- LOGIN ERROR MESSAGES ONLY -->
+    {% if messages %}
+      {% for message in messages %}
+        {% if message.tags == 'error' %}
+          <p style="color:red;">{{ message }}</p>
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+</div>
+>>>>>>> counter

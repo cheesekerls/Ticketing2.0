@@ -11,7 +11,7 @@ def print_ticket_to_pos(ticket_text, qr_data=None):
     """
     try:
         print("🖨️ Connecting to printer...")
-        printer = Serial(devfile="COM3", baudrate=9600, timeout=1)
+        printer = Serial(devfile="COM7", baudrate=9600, timeout=1)
         time.sleep(1)
         printer.hw("INIT")
         printer.set(align='center', font='a', width=3, height=3)

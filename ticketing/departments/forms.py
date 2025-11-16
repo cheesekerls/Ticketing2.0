@@ -1,6 +1,6 @@
 from django import forms
-from .models import Department
-from services.models import Service
+from .models import Department, CompServices, Service
+
 
 class DepartmentForm(forms.ModelForm):
     class Meta:
@@ -30,3 +30,13 @@ class ServiceForm(forms.ModelForm):
         if Service.objects.filter(service_name__iexact=service_name).exists():
             raise forms.ValidationError("A service with this name already exists!")
         return service_name
+    
+class CompServicesForm(forms.ModelForm):
+    class Meta:
+        model = CompServices
+        fields = ['mac_address', 'role', 'department']
+        widgets = {
+            'mac_address': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter MAC Address'}),
+            'role': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter Role'}),
+            'department': forms.Select(attrs={'class': 'form-select'}),
+        }

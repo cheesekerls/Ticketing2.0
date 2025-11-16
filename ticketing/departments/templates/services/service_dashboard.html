@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kiosk Services</title>
+  <title>Services Dashboard</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #ffffff;
+      background-color: #f7f9fc;
       margin: 0;
     }
 
@@ -19,6 +19,20 @@
       font-weight: bold;
       text-align: center;
       letter-spacing: 0.5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logout-btn {
+      background-color: #e74c3c;
+      border: none;
+      color: white;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 14px;
     }
 
     h2 {
@@ -43,12 +57,17 @@
       padding: 20px;
       background-color: #fff;
       box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+    }
+
+    .service-box:hover {
+      transform: translateY(-5px);
     }
 
     .service-box h3 {
       margin-bottom: 20px;
       font-size: 20px;
-      color: #000;
+      color: #123B5A;
     }
 
     .btn {
@@ -145,29 +164,25 @@
 <body>
 
   <header>
-    {% if department_name and kiosk_name %}
-      {{ department_name }} — {{ kiosk_name }} Kiosk
-    {% elif department_name %}
-      {{ department_name }} Department
-    {% elif kiosk_name %}
-      {{ kiosk_name }} Kiosk
+    {% if counter.department %}
+      {{ counter.department.department_name }} Department
     {% else %}
-      Unknown Kiosk
+      Services Dashboard
     {% endif %}
+    <form method="POST" action="{% url 'logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="logout-btn">Logout</button>
+    </form>
   </header>
 
   {% if not services %}
     <div style="text-align:center; margin-top:50px; font-weight:bold; color:red;">
-      {% if mac_address %}
-        No services available for this MAC/department.
-      {% else %}
-        Kiosk MAC not recognized. Please register the machine in the system.
-      {% endif %}
+      No services available for this counter.
     </div>
   {% endif %}
 
   {% if services %}
-  <h2>Select a Service</h2>
+    <h2>Select a Service</h2>
   {% endif %}
 
   <div class="service-container">
@@ -219,8 +234,8 @@
       serviceIdField.value = selectedServiceId;
       ticketTypeField.value = type;
 
-      // Set backend URL like before
-      form.action = `/tickets/print_ticket_to_pos/${selectedServiceId}/?mac={{ comp.mac_address }}`;
+      // Backend URL (adjust your route)
+      form.action = `/tickets/print_ticket_to_pos/${selectedServiceId}/`;
 
       // Submit form
       form.submit();
@@ -230,7 +245,7 @@
         const notice = document.getElementById('print-notice');
         notice.style.display = 'block';
         setTimeout(() => {
-          window.location.reload(); // refresh back to kiosk screen
+          window.location.reload();
         }, 2000);
       }, 2000);
     }
